@@ -2,9 +2,10 @@
 
 // TODO: split to separate files
 
-void draw_numbers(char *pixels,unsigned width, unsigned height, unsigned num_faces){
+void draw_numbers(Data &data, Settings &settings){
+    // TODO: optimize this (only loop through each pixel once)
     // for each number
-    for(unsigned i=0;i<num_faces;i++){
+    for(unsigned char i=0;i<data.num_faces;i++){
         // - get the minimum and maximum position of pixels -
         // minimum position
         unsigned min_x = 9001; // it's over 9000!
@@ -13,107 +14,122 @@ void draw_numbers(char *pixels,unsigned width, unsigned height, unsigned num_fac
         unsigned max_x = 0;
         unsigned max_y = 0;
         // for each pixel
-            // - update minimum -
-            // - update maximum -
+        for(unsigned x=0;x<data.image_width;x++){
+            for(unsigned y=0;y<data.image_height;y++){
+                // if it's the face we're looking for
+                if(data.pixels[x*3+data.image_width*y*3] == settings.face_color+i){
+                    // - update minimum -
+                    min_x = x<min_x?x:min_x;
+                    min_y = y<min_y?y:min_y;
+                    // - update maximum -
+                    max_x = x>max_x?x:max_x;
+                    max_y = y>max_y?y:max_y;
+                }
+            }
+        }
         // TODO: draw numbers
+        // TODO: remove debug
+        // for now, draw a dot in the middle of each face
+        // middle x pos
+        unsigned middle_x = (min_x+max_x)/2;
+        // middle y pos
+        unsigned middle_y = (min_y+max_y)/2;
+        data.pixels[middle_x*3+middle_y*3*data.image_width] = 0;
+        data.pixels[1+middle_x*3+middle_y*3*data.image_width] = 0;
+        data.pixels[2+middle_x*3+middle_y*3*data.image_width] = 0;
     }
 }
 
-void draw_face(int x, int y, unsigned orientation, unsigned face_size, char *pixels, unsigned image_width, unsigned char color)
-{
+void draw_face(int x, int y, FaceOrientation orientation, unsigned char color, Settings &settings, Data &data){
+    // brighten color with base color
+    color += settings.face_color;
     // used for filling faces
     unsigned x_pos = 1;
     unsigned y_pos = 1;
-    switch(orientation)
-    {
+    switch(orientation){
         // left face
-        case 0:
+        case FACE_LEFT:
             // - fill -
             // for the entire height of the face
-            for(y_pos=1;y_pos < face_size;y_pos++)
-            {
+            for(y_pos=1;y_pos < settings.face_size;y_pos++){
                 // draw a line, offset in y
-                draw_diagonal_line(x,y+y_pos,-1,face_size,pixels,image_width,color);
+                draw_diagonal_line(x,y+y_pos,-1,settings,data,color);
             }
             // draw bottom
-            draw_diagonal_line(x,y,-1,face_size,pixels,image_width,0);
+            draw_diagonal_line(x,y,-1,settings,data,0);
             // draw top
-            draw_diagonal_line(x,y+face_size,-1,face_size,pixels,image_width,0);
+            draw_diagonal_line(x,y+settings.face_size,-1,settings,data,0);
             // draw left edge
-            draw_vertical_line(x,y,face_size,pixels,image_width,0);
+            draw_vertical_line(x,y,settings,data,0);
             // draw right edge
-            draw_vertical_line(x-face_size,y+face_size/2,face_size,pixels,image_width,0);
+            draw_vertical_line(x-settings.face_size,y+settings.face_size/2,settings,data,0);
             break;
         // right face
-        case 1:
+        case FACE_RIGHT:
             // - fill -
             // for the entire height of the face
-            for(y_pos=1;y_pos < face_size;y_pos++)
-            {
+            for(y_pos=1;y_pos < settings.face_size;y_pos++){
                 // draw a line, offset in y
-                draw_diagonal_line(x,y+y_pos,1,face_size,pixels,image_width,color);
+                draw_diagonal_line(x,y+y_pos,1,settings,data,color);
             }
             // draw bottom
-            draw_diagonal_line(x,y,1,face_size,pixels,image_width,0);
+            draw_diagonal_line(x,y,1,settings,data,0);
             // draw top
-            draw_diagonal_line(x,y+face_size,1,face_size,pixels,image_width,0);
+            draw_diagonal_line(x,y+settings.face_size,1,settings,data,0);
             // draw left edge
-            draw_vertical_line(x,y,face_size,pixels,image_width,0);
+            draw_vertical_line(x,y,settings,data,0);
             // draw right edge
-            draw_vertical_line(x+face_size,y+face_size/2,face_size,pixels,image_width,0);
+            draw_vertical_line(x+settings.face_size,y+settings.face_size/2,settings,data,0);
             break;
         // top face
-        case 2:
+        case FACE_TOP:
             // - fill -
             // offset y (since we're drawing the top face)
-            y_pos = face_size;
+            y_pos = settings.face_size;
             // for the entire width of the face
-            while(x_pos<face_size)
-            {
+            while(x_pos<settings.face_size){
                 // draw a line
-                draw_diagonal_line(x+x_pos,y+y_pos,-1,face_size,pixels,image_width,color);
+                draw_diagonal_line(x+x_pos,y+y_pos,-1,settings,data,color);
                 // offset in y
                 y_pos++;
                 // draw a line
-                draw_diagonal_line(x+x_pos,y+y_pos,-1,face_size,pixels,image_width,color);
+                draw_diagonal_line(x+x_pos,y+y_pos,-1,settings,data,color);
                 // offset in x
                 x_pos++;
                 // draw a second line (two steps in x for each step in y)
-                draw_diagonal_line(x+x_pos,y+y_pos,-1,face_size,pixels,image_width,color);
+                draw_diagonal_line(x+x_pos,y+y_pos,-1,settings,data,color);
                 // offset in x
                 x_pos++;
             }
             // draw bottom left
-            draw_diagonal_line(x,y+face_size,1,face_size,pixels,image_width,0);
+            draw_diagonal_line(x,y+settings.face_size,1,settings,data,0);
             // draw bottom right
-            draw_diagonal_line(x,y+face_size,-1,face_size,pixels,image_width,0);
+            draw_diagonal_line(x,y+settings.face_size,-1,settings,data,0);
             // draw top left
-            draw_diagonal_line(x-face_size,y+1.5*face_size,1,face_size,pixels,image_width,0);
+            draw_diagonal_line(x-settings.face_size,y+1.5*settings.face_size,1,settings,data,0);
             // draw top right
-            draw_diagonal_line(x+face_size,y+1.5*face_size,-1,face_size,pixels,image_width,0);
+            draw_diagonal_line(x+settings.face_size,y+1.5*settings.face_size,-1,settings,data,0);
             break;
         default:
             break;
     }
 }
 
-void draw_diagonal_line(int x, int y, int direction, unsigned face_size, char *pixels, unsigned image_width, char color)
-{
+void draw_diagonal_line(int x, int y, int direction, Settings &settings, Data &data, unsigned char color){
     // current pos
     int pos = 0;
     // util we've drawn the entire line
-    while(pos<(int)face_size)
-    {
+    while(pos<(int)settings.face_size){
         // draw first pixel
-        pixels[3*(pos*direction+x+image_width*y)] = color;
-        pixels[1+3*(pos*direction+x+image_width*y)] = color;
-        pixels[2+3*(pos*direction+x+image_width*y)] = color;
+        data.pixels[3*(pos*direction+x+data.image_width*y)] = color;
+        data.pixels[1+3*(pos*direction+x+data.image_width*y)] = color;
+        data.pixels[2+3*(pos*direction+x+data.image_width*y)] = color;
         // increase x
         pos++;
         // draw second pixel
-        pixels[3*(pos*direction+x+image_width*y)] = color;
-        pixels[1+3*(pos*direction+x+image_width*y)] = color;
-        pixels[2+3*(pos*direction+x+image_width*y)] = color;
+        data.pixels[3*(pos*direction+x+data.image_width*y)] = color;
+        data.pixels[1+3*(pos*direction+x+data.image_width*y)] = color;
+        data.pixels[2+3*(pos*direction+x+data.image_width*y)] = color;
         // increase x
         pos++;
         // increase y
@@ -121,97 +137,79 @@ void draw_diagonal_line(int x, int y, int direction, unsigned face_size, char *p
     }
 }
 
-void draw_vertical_line(int x, int y, unsigned face_size, char *pixels, unsigned image_width, char color)
-{
+void draw_vertical_line(int x, int y, Settings &settings, Data &data, unsigned char color){
     int pos = 0;
     // until we've drawn the entire line
-    while(pos<(int)face_size)
-    {
+    while(pos<(int)settings.face_size){
         // draw pixel
-        pixels[3*(x+image_width*(pos+y))] = color;
-        pixels[1+3*(x+image_width*(pos+y))] = color;
-        pixels[2+3*(x+image_width*(pos+y))] = color;
+        data.pixels[3*(x+data.image_width*(pos+y))] = color;
+        data.pixels[1+3*(x+data.image_width*(pos+y))] = color;
+        data.pixels[2+3*(x+data.image_width*(pos+y))] = color;
         // increase y
         pos++;
     }
 }
 
 int main(){
-    // voxel data describing our structure
-    // TODO: read from blender ?
-    const unsigned int x_num_voxels= 4;
-    const unsigned int y_num_voxels= 2;
-    const unsigned int z_num_voxels= 3;
+    // calculated data used by several of the functions
+    Data data;
+    // = get user settings =
+    // TODO: get input from user instead
+    Settings settings;
+    // color of the faces
+    settings.face_color = 100;
+    // face size (in screen space)
+    settings.face_size = 32;
+    // size of voxel grid
+    settings.x_num_voxels= 4;
+    settings.y_num_voxels= 2;
+    settings.z_num_voxels= 3;
     // total number of voxels
-    const unsigned int num_voxels =x_num_voxels*y_num_voxels*z_num_voxels;
-    bool voxels[x_num_voxels][y_num_voxels][z_num_voxels];
+    data.num_voxels =settings.x_num_voxels*settings.y_num_voxels*settings.z_num_voxels;
+    settings.voxels = new bool[data.num_voxels];
     // initialize all to false
-    memset(voxels,0,num_voxels*sizeof(bool));
+    memset(settings.voxels,0,data.num_voxels*sizeof(bool));
     // set initial data
     // TODO: beautify
-    voxels[0][0][0] = true;
-    voxels[1][0][0] = true;
-    voxels[2][0][0] = true;
-    voxels[3][0][0] = true;
-    voxels[0][1][0] = true;
-    voxels[1][1][0] = true;
-    voxels[2][1][0] = true;
-    voxels[3][1][0] = true;
-    voxels[0][0][1] = true;
-    voxels[1][0][1] = true;
-    voxels[2][0][1] = true;
-    voxels[3][0][1] = true;
-    voxels[0][1][1] = true;
-    voxels[1][1][1] = true;
-    voxels[2][1][1] = true;
-    voxels[3][1][1] = false;
-    voxels[0][0][2] = true;
-    voxels[1][0][2] = true;
-    voxels[2][0][2] = true;
-    voxels[3][0][2] = true;
-    voxels[0][1][2] = false;
-    voxels[1][1][2] = false;
-    voxels[2][1][2] = true;
-    voxels[3][1][2] = false;
-    // face size (in screen space)
-    unsigned int face_size = 32;
+    settings.voxels[0] = true;
+    settings.voxels[1] = true;
+    settings.voxels[2] = true;
+    settings.voxels[7] = true;
     // TODO: fix size
     // - each voxel will be (face_size+1)*2 pixels wide -
     // - and face_size*1.5+a pixels high -
     // final image height (padded a bit)
-    const unsigned image_height = 800;
+    data.image_height = 800;
     // final image width (padded by one voxel)
-    const unsigned image_width = 800;
+    data.image_width = 800;
     // pixels for final image
-    char pixels[3*image_height*image_width];
+    data.pixels = new unsigned char[3*data.image_height*data.image_width];
     // set all pixels to black
-    memset(pixels,255,3*image_height*image_width*sizeof(char));
+    memset(data.pixels,255,3*data.image_height*data.image_width*sizeof(char));
     // == decompose into faces ==
     // id of the currently drawn face
     // start at 1 since the color of the outlines is 0
     // TODO: start at 1
-    unsigned char face_id = 100;
+    unsigned char face_id = 0;
     // for each voxel 
-    for(unsigned x=0;x<x_num_voxels;x++){
-        for(unsigned y=0;y<y_num_voxels;y++){
-            for(unsigned z=0;z<z_num_voxels;z++){
+    for(unsigned x=0;x<settings.x_num_voxels;x++){
+        for(unsigned y=0;y<settings.y_num_voxels;y++){
+            for(unsigned z=0;z<settings.z_num_voxels;z++){
                 // if the current voxel is filled
-                if(voxels[x][y][z]){
+                if(settings.voxels[x+settings.x_num_voxels*(y+settings.y_num_voxels*z)]){
                     // placement relative to other voxels
                     int offset_x = y-x;
-                    int pos_x = 400+(offset_x)*(face_size);
+                    int pos_x = 400+(offset_x)*(settings.face_size);
                     int offset_y = -x-y+2*z;
-                    int pos_y = 400+(offset_y)*(face_size/2);
+                    int pos_y = 400+(offset_y)*(settings.face_size/2);
                     // -- left face --
                     // - check visibility (to avoid increasing the id for faces not visible) -
                     // should we draw the face?
                     bool face_visible = true;
                     // unless we're on the far left side
-                    if(x<x_num_voxels-1)
-                    {
+                    if(x<settings.x_num_voxels-1){
                         // check if there's a voxel directly in front of the left face
-                        if(voxels[x+1][y][z])
-                        {
+                        if(settings.voxels[(x+1)+settings.x_num_voxels*(y+settings.y_num_voxels*z)]){
                             // don't draw the face (will not be visible anyway)
                             face_visible=false;
                         }
@@ -219,18 +217,16 @@ int main(){
                     // if there's nothing blocking
                     if(face_visible){
                         // draw left face
-                        draw_face(pos_x,pos_y,0,face_size,pixels,image_width, face_id);
+                        draw_face(pos_x,pos_y,FACE_LEFT,face_id, settings, data);
                         // increase face id
                         face_id++;
                     }
                     // -- right face --
                     // - check visibility (to avoid increasing the id for faces not visible) -
                     face_visible = true;
-                    if(y<y_num_voxels-1)
-                    {
+                    if(y<settings.y_num_voxels-1){
                         // check if there's a voxel directly in front of the left face
-                        if(voxels[x][y+1][z])
-                        {
+                        if(settings.voxels[x+settings.x_num_voxels*((y+1)+settings.y_num_voxels*z)]){
                             // don't draw the face (will not be visible anyway)
                             face_visible=false;
                         }
@@ -238,18 +234,16 @@ int main(){
                     // if there's nothing blocking
                     if(face_visible){
                         // draw right face
-                        draw_face(pos_x,pos_y,1,face_size,pixels,image_width, face_id);
+                        draw_face(pos_x,pos_y,FACE_RIGHT,face_id, settings, data);
                         // increase face id
                         face_id++;
                     }
                     // -- top face --
                     // - check visibility (to avoid increasing the id for faces not visible) -
                     face_visible = true;
-                    if(z<z_num_voxels-1)
-                    {
+                    if(z<settings.z_num_voxels-1){
                         // check if there's a voxel directly in front of the left face
-                        if(voxels[x][y][z+1])
-                        {
+                        if(settings.voxels[x+settings.x_num_voxels*(y+settings.y_num_voxels*(z+1))]){
                             // don't draw the face (will not be visible anyway)
                             face_visible=false;
                         }
@@ -257,7 +251,7 @@ int main(){
                     // if there's nothing blocking
                     if(face_visible){
                         // draw top face
-                        draw_face(pos_x,pos_y,2,face_size,pixels,image_width, face_id);
+                        draw_face(pos_x,pos_y,FACE_TOP,face_id, settings, data);
                         // increase face id
                         face_id++;
                     }
@@ -265,10 +259,14 @@ int main(){
             }
         }
     }
+    // TODO: remove debug
+    data.num_faces = face_id;
+    std::cout << data.num_faces << std::endl;
+    draw_numbers(data, settings);
     // == write file  ==
     // create image from pixels
     Magick::Image image;
-    image.read(image_width, image_height, "RGB", Magick::CharPixel, pixels);
+    image.read(data.image_width, data.image_height, "RGB", Magick::CharPixel, data.pixels);
     // flip image (since ImageMagick works upside down ;)
     image.flip();
     // write file to disk
