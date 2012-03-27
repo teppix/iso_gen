@@ -1,7 +1,6 @@
 #include "voxelgrid.h"
 #include "app.h"
 
-// TODO: split to separate files
 
 void draw_numbers(Data &data, Settings &settings){
     // TODO: optimize this (only loop through each pixel once)
@@ -28,16 +27,20 @@ void draw_numbers(Data &data, Settings &settings){
                 }
             }
         }
-        // TODO: draw numbers
-        // TODO: remove debug
-        // for now, draw a dot in the middle of each face
-        // middle x pos
-        unsigned middle_x = (min_x+max_x)/2;
-        // middle y pos
-        unsigned middle_y = (min_y+max_y)/2;
-        data.pixels[middle_x*3+middle_y*3*data.image_width] = 0;
-        data.pixels[1+middle_x*3+middle_y*3*data.image_width] = 0;
-        data.pixels[2+middle_x*3+middle_y*3*data.image_width] = 0;
+        // check that we've found something
+        if(min_x != 9001 && min_x != 9001)
+        {
+            // TODO: draw numbers
+            // TODO: remove debug
+            // for now, draw a dot in the middle of each face
+            // middle x pos
+            unsigned middle_x = (min_x+max_x)/2;
+            // middle y pos
+            unsigned middle_y = (min_y+max_y)/2;
+            data.pixels[middle_x*3+middle_y*3*data.image_width] = 0;
+            data.pixels[1+middle_x*3+middle_y*3*data.image_width] = 0;
+            data.pixels[2+middle_x*3+middle_y*3*data.image_width] = 0;
+        }
     }
 }
 
@@ -167,18 +170,19 @@ int main(){
     // TODO: fix size
     // - each voxel will be (face_size+1)*2 pixels wide -
     // - and face_size*1.5+a pixels high -
-    // final image height (padded a bit)
-    data.image_height = 800;
+    // final image height (padded by one voxel)
+    data.image_height = (voxelgrid->dim_x+voxelgrid->dim_y+2*voxelgrid->dim_z+1)*settings.face_size/2;
     // final image width (padded by one voxel)
-    data.image_width = 800;
+    data.image_width = settings.face_size*(voxelgrid->dim_x+voxelgrid->dim_y+1);
+    // where to place the 0,0,0 voxel
+    unsigned int origin_x = voxelgrid->dim_x*settings.face_size + settings.face_size/2;
+    unsigned int origin_y = (voxelgrid->dim_x+voxelgrid->dim_y-2)*settings.face_size/2+ settings.face_size/4;
     // pixels for final image
     data.pixels = new unsigned char[3*data.image_height*data.image_width];
     // set all pixels to black
     memset(data.pixels,255,3*data.image_height*data.image_width*sizeof(char));
     // == decompose into faces ==
     // id of the currently drawn face
-    // start at 1 since the color of the outlines is 0
-    // TODO: start at 1
     unsigned char face_id = 0;
     // for each voxel 
     for(unsigned x=0;x<voxelgrid->dim_x;x++){
@@ -188,9 +192,9 @@ int main(){
                 if (VOXEL (voxelgrid, x, y, z) == 1) {
                     // placement relative to other voxels
                     int offset_x = y-x;
-                    int pos_x = 400+(offset_x)*(settings.face_size);
+                    int pos_x = origin_x+(offset_x)*(settings.face_size);
                     int offset_y = -x-y+2*z;
-                    int pos_y = 400+(offset_y)*(settings.face_size/2);
+                    int pos_y = origin_y+(offset_y)*(settings.face_size/2);
                     // -- left face --
                     // - check visibility (to avoid increasing the id for faces not visible) -
                     // should we draw the face?
@@ -250,9 +254,9 @@ int main(){
             }
         }
     }
-    // TODO: remove debug
+    // set number of faces
     data.num_faces = face_id;
-    std::cout << data.num_faces << std::endl;
+    // draw the number of each face
     draw_numbers(data, settings);
     // == write file  ==
     // create image from pixels
