@@ -1,3 +1,4 @@
+#include "voxelgrid.h"
 #include "app.h"
 
 // TODO: split to separate files
@@ -137,42 +138,8 @@ void draw_vertical_line(int x, int y, unsigned face_size, char *pixels, unsigned
 }
 
 int main(){
-    // voxel data describing our structure
-    // TODO: read from blender ?
-    const unsigned int x_num_voxels= 4;
-    const unsigned int y_num_voxels= 2;
-    const unsigned int z_num_voxels= 3;
-    // total number of voxels
-    const unsigned int num_voxels =x_num_voxels*y_num_voxels*z_num_voxels;
-    bool voxels[x_num_voxels][y_num_voxels][z_num_voxels];
-    // initialize all to false
-    memset(voxels,0,num_voxels*sizeof(bool));
-    // set initial data
-    // TODO: beautify
-    voxels[0][0][0] = true;
-    voxels[1][0][0] = true;
-    voxels[2][0][0] = true;
-    voxels[3][0][0] = true;
-    voxels[0][1][0] = true;
-    voxels[1][1][0] = true;
-    voxels[2][1][0] = true;
-    voxels[3][1][0] = true;
-    voxels[0][0][1] = true;
-    voxels[1][0][1] = true;
-    voxels[2][0][1] = true;
-    voxels[3][0][1] = true;
-    voxels[0][1][1] = true;
-    voxels[1][1][1] = true;
-    voxels[2][1][1] = true;
-    voxels[3][1][1] = false;
-    voxels[0][0][2] = true;
-    voxels[1][0][2] = true;
-    voxels[2][0][2] = true;
-    voxels[3][0][2] = true;
-    voxels[0][1][2] = false;
-    voxels[1][1][2] = false;
-    voxels[2][1][2] = true;
-    voxels[3][1][2] = false;
+    VoxelGrid *voxelgrid = voxelgrid_load ("in.vox");
+
     // face size (in screen space)
     unsigned int face_size = 32;
     // TODO: fix size
@@ -192,11 +159,12 @@ int main(){
     // TODO: start at 1
     unsigned char face_id = 100;
     // for each voxel 
-    for(unsigned x=0;x<x_num_voxels;x++){
-        for(unsigned y=0;y<y_num_voxels;y++){
-            for(unsigned z=0;z<z_num_voxels;z++){
+    for(unsigned x=0;x<voxelgrid->dim_x;x++){
+        for(unsigned y=0;y<voxelgrid->dim_y;y++){
+            for(unsigned z=0;z<voxelgrid->dim_z;z++){
                 // if the current voxel is filled
-                if(voxels[x][y][z]){
+                //if(voxels[x][y][z]){
+                if (VOXEL (voxelgrid, x, y, z) == 1) {
                     // placement relative to other voxels
                     int offset_x = y-x;
                     int pos_x = 400+(offset_x)*(face_size);
@@ -207,10 +175,10 @@ int main(){
                     // should we draw the face?
                     bool face_visible = true;
                     // unless we're on the far left side
-                    if(x<x_num_voxels-1)
+                    if(x<voxelgrid->dim_x-1)
                     {
                         // check if there's a voxel directly in front of the left face
-                        if(voxels[x+1][y][z])
+                        if(VOXEL(voxelgrid, x+1, y, z))
                         {
                             // don't draw the face (will not be visible anyway)
                             face_visible=false;
@@ -226,10 +194,10 @@ int main(){
                     // -- right face --
                     // - check visibility (to avoid increasing the id for faces not visible) -
                     face_visible = true;
-                    if(y<y_num_voxels-1)
+                    if(y<voxelgrid->dim_y-1)
                     {
                         // check if there's a voxel directly in front of the left face
-                        if(voxels[x][y+1][z])
+                        if(VOXEL(voxelgrid, x, y+1, z))
                         {
                             // don't draw the face (will not be visible anyway)
                             face_visible=false;
@@ -245,10 +213,10 @@ int main(){
                     // -- top face --
                     // - check visibility (to avoid increasing the id for faces not visible) -
                     face_visible = true;
-                    if(z<z_num_voxels-1)
+                    if(z<voxelgrid->dim_z-1)
                     {
                         // check if there's a voxel directly in front of the left face
-                        if(voxels[x][y][z+1])
+                        if(VOXEL(voxelgrid, x, y, z+1))
                         {
                             // don't draw the face (will not be visible anyway)
                             face_visible=false;
