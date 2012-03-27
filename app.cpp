@@ -1,6 +1,5 @@
 #include "app.h"
 
-// TODO: split to separate files
 
 void draw_numbers(Data &data, Settings &settings){
     // TODO: optimize this (only loop through each pixel once)
@@ -27,16 +26,20 @@ void draw_numbers(Data &data, Settings &settings){
                 }
             }
         }
-        // TODO: draw numbers
-        // TODO: remove debug
-        // for now, draw a dot in the middle of each face
-        // middle x pos
-        unsigned middle_x = (min_x+max_x)/2;
-        // middle y pos
-        unsigned middle_y = (min_y+max_y)/2;
-        data.pixels[middle_x*3+middle_y*3*data.image_width] = 0;
-        data.pixels[1+middle_x*3+middle_y*3*data.image_width] = 0;
-        data.pixels[2+middle_x*3+middle_y*3*data.image_width] = 0;
+        // check that we've found something
+        if(min_x != 9001 && min_x != 9001)
+        {
+            // TODO: draw numbers
+            // TODO: remove debug
+            // for now, draw a dot in the middle of each face
+            // middle x pos
+            unsigned middle_x = (min_x+max_x)/2;
+            // middle y pos
+            unsigned middle_y = (min_y+max_y)/2;
+            data.pixels[middle_x*3+middle_y*3*data.image_width] = 0;
+            data.pixels[1+middle_x*3+middle_y*3*data.image_width] = 0;
+            data.pixels[2+middle_x*3+middle_y*3*data.image_width] = 0;
+        }
     }
 }
 
@@ -163,33 +166,40 @@ int main(){
     // size of voxel grid
     settings.x_num_voxels= 4;
     settings.y_num_voxels= 2;
-    settings.z_num_voxels= 3;
+    settings.z_num_voxels= 2;
     // total number of voxels
     data.num_voxels =settings.x_num_voxels*settings.y_num_voxels*settings.z_num_voxels;
     settings.voxels = new bool[data.num_voxels];
     // initialize all to false
     memset(settings.voxels,0,data.num_voxels*sizeof(bool));
     // set initial data
-    // TODO: beautify
     settings.voxels[0] = true;
     settings.voxels[1] = true;
     settings.voxels[2] = true;
+    settings.voxels[3] = true;
+    settings.voxels[4] = true;
+    settings.voxels[5] = false;
+    settings.voxels[6] = true;
     settings.voxels[7] = true;
+    settings.voxels[8] = false;
+    settings.voxels[9] = false;
+    settings.voxels[10] = true;
     // TODO: fix size
     // - each voxel will be (face_size+1)*2 pixels wide -
     // - and face_size*1.5+a pixels high -
-    // final image height (padded a bit)
-    data.image_height = 800;
+    // final image height (padded by one voxel)
+    data.image_height = (settings.x_num_voxels+settings.y_num_voxels+2*settings.z_num_voxels+1)*settings.face_size/2;
     // final image width (padded by one voxel)
-    data.image_width = 800;
+    data.image_width = settings.face_size*(settings.x_num_voxels+settings.y_num_voxels+1);
+    // where to place the 0,0,0 voxel
+    unsigned int origin_x = settings.x_num_voxels*settings.face_size + settings.face_size/2;
+    unsigned int origin_y = (settings.x_num_voxels+settings.y_num_voxels-2)*settings.face_size/2+ settings.face_size/4;
     // pixels for final image
     data.pixels = new unsigned char[3*data.image_height*data.image_width];
     // set all pixels to black
     memset(data.pixels,255,3*data.image_height*data.image_width*sizeof(char));
     // == decompose into faces ==
     // id of the currently drawn face
-    // start at 1 since the color of the outlines is 0
-    // TODO: start at 1
     unsigned char face_id = 0;
     // for each voxel 
     for(unsigned x=0;x<settings.x_num_voxels;x++){
@@ -199,9 +209,9 @@ int main(){
                 if(settings.voxels[x+settings.x_num_voxels*(y+settings.y_num_voxels*z)]){
                     // placement relative to other voxels
                     int offset_x = y-x;
-                    int pos_x = 400+(offset_x)*(settings.face_size);
+                    int pos_x = origin_x+(offset_x)*(settings.face_size);
                     int offset_y = -x-y+2*z;
-                    int pos_y = 400+(offset_y)*(settings.face_size/2);
+                    int pos_y = origin_y+(offset_y)*(settings.face_size/2);
                     // -- left face --
                     // - check visibility (to avoid increasing the id for faces not visible) -
                     // should we draw the face?
@@ -259,9 +269,9 @@ int main(){
             }
         }
     }
-    // TODO: remove debug
+    // set number of faces
     data.num_faces = face_id;
-    std::cout << data.num_faces << std::endl;
+    // draw the number of each face
     draw_numbers(data, settings);
     // == write file  ==
     // create image from pixels
