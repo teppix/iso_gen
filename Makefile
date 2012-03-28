@@ -1,2 +1,2 @@
 all:
-	g++  -Wall -g -o app app.cpp voxelgrid.c -I/usr/include/ImageMagick -lMagick++ -lMagickCore
+	gcc  -Wall -g -O2 -o app app.c settings.c renderer.c voxelgrid.c -lpng

@@ -24,6 +24,6 @@ VoxelGrid *voxelgrid_create(const char *filename, int dim_x, int dim_y, int dim_
 void voxelgrid_free (VoxelGrid *voxelgrid);
 
 void voxelgrid_save(VoxelGrid *voxelgrid);
-void voxelgrid_save_as(VoxelGrid *voxelgrid, char *filename);
+void voxelgrid_save_as(VoxelGrid *voxelgrid, const char *filename);
 
 #endif // __VOXELGRID_H__
