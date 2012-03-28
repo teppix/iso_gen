@@ -1,1 +1,18 @@
+# binaries
+isogen
+a.out
+
+# generated files
+isogen_config.h
+
+
+# file formats
+*.png
 .*.swp
+
+# cmake stuff
+CMakeCache.txt
+CMakeFiles
+Makefile
+*.cmake
+
