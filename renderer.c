@@ -182,8 +182,10 @@ void renderer_render(Renderer *renderer, Settings *settings, VoxelGrid *voxelgri
     }
     // set number of faces
     renderer->num_faces = face_id;
-    // draw the number of each face
-    draw_numbers(renderer, settings);
+    // draw the number of each face (if the user wants us to)
+    if(settings->numbered_faces){
+        draw_numbers(renderer, settings);
+    }
 }
 
 void draw_numbers(Renderer *renderer, Settings *settings){

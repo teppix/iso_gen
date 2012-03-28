@@ -11,6 +11,8 @@ Settings *settings_create(){
 	settings->light[0] = 0;
 	settings->light[1] = 20;
 	settings->light[2] = 50;
+    // don't draw numbers by default
+    settings->numbered_faces = 0;
     // face size (in screen space)
     // - each voxel will be (face_size+1)*2 pixels wide -
     // - and face_size*1.5+a pixels high -
