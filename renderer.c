@@ -5,6 +5,7 @@
 #include "settings.h"
 #include "voxelgrid.h"
 #include "renderer.h"
+#include "font.xbm"
 
 int renderer_save(Renderer *renderer, Settings *settings){
     // iterator
@@ -97,7 +98,7 @@ void renderer_render(Renderer *renderer, Settings *settings, VoxelGrid *voxelgri
     // set all pixels to black
     memset(renderer->pixels,255,3*renderer->image_height*renderer->image_width*sizeof(char));
     // id of the currently drawn face
-    face_id = 0;
+    face_id = 1;
     // free previous face map
     // TODO: reuse if the image size hasn't changed
     if(renderer->face_map != NULL){
@@ -232,16 +233,13 @@ void draw_numbers(Renderer *renderer, Settings *settings){
     for(face=0;face<renderer->num_faces;face++){
         // if we've found it
         if(found[face]){
-            // TODO: draw numbers
-            // TODO: remove debug
-            // for now, draw a dot in the middle of each face
+            // draw the number in the middle of each face
             // middle x pos
+            // TODO: use better algorithm? weight in all pixels
             unsigned middle_x = (min_x[face]+max_x[face])/2;
             // middle y pos
             unsigned middle_y = (min_y[face]+max_y[face])/2;
-            renderer->pixels[middle_x*3+middle_y*3*renderer->image_width] = 0;
-            renderer->pixels[1+middle_x*3+middle_y*3*renderer->image_width] = 0;
-            renderer->pixels[2+middle_x*3+middle_y*3*renderer->image_width] = 0;
+            draw_number(renderer, middle_x, middle_y,face);
         }
     }
     // free our arrays
@@ -362,5 +360,53 @@ void draw_vertical_line(int x, int y, Settings *settings, Renderer *renderer, un
         renderer->face_map[x+renderer->image_width*(pos+y)] = face_id;
         // increase y
         pos++;
+    }
+}
+
+void draw_number(Renderer *renderer, unsigned int x, unsigned int y, unsigned int number){
+    // iterators
+    unsigned int row,pixel;
+    unsigned int digit;
+    // offset relative to center of face
+    // TODO: center number
+    int offset=-3;
+    // we want to print one digit even if it's zero
+    unsigned char first_run = 1;
+    // until number is zero
+    while(number != 0 || first_run){
+        // no longer the first run
+        first_run = 0;
+        // get last digit
+        digit = number%10;
+        // remove digit from number
+        number /= 10;
+        // - draw digit -
+        // for each row
+        for(row=0;row<6;row++){
+            // read correct byte
+            unsigned char byte = font_bits[digit/2+5*row];
+            // if it's an odd digit
+            if(digit&1){
+                // move down upper nybble
+                byte = byte >> 4;
+            }
+            // for each pixel
+            for(pixel=0;pixel<4;pixel++)
+            {
+                // get correct bit
+                unsigned char bit = byte &1;
+                // shift bits in nybble one step
+                byte = byte >> 1;
+                // if the pixel is filled in
+                if(bit)
+                {
+                    // add it to the image
+                    renderer->pixels[(pixel+x-offset)*3+(4+y-row)*3*renderer->image_width] = 0;
+                    renderer->pixels[1+(pixel+x-offset)*3+(4+y-row)*3*renderer->image_width] = 0;
+                    renderer->pixels[2+(pixel+x-offset)*3+(4+y-row)*3*renderer->image_width] = 0;
+                }
+            }
+        }
+        offset+= 4;
     }
 }

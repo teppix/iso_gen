@@ -33,5 +33,6 @@ void draw_vertical_line(int x, int y, Settings *settings, Renderer *renderer, un
 void draw_diagonal_line(int x, int y, int direction, Settings *settings, Renderer *renderer, unsigned char color, unsigned int face_id);
 void draw_face(int x, int y, enum FaceOrientation orientation, unsigned int face_id, Settings *settings, Renderer *renderer);
 void draw_numbers(Renderer *renderer, Settings *settings);
+void draw_number(Renderer *renderer, unsigned int x, unsigned int y, unsigned int number);
 
 #endif
