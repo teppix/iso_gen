@@ -26,3 +26,4 @@ include_directories (${PNG_INCLUDE_DIR})
 add_executable (isogen ${ISOGEN_SRCS})
 target_link_libraries (isogen ${PNG_LIBRARY})
 
+set(CMAKE_BUILD_TYPE Debug)

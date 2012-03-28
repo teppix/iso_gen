@@ -10,6 +10,9 @@ struct Settings{
     unsigned int face_size;
     // base color for each face
     unsigned char face_color;
+	// light level in each direction
+	unsigned char light[3];
+	// filename of output file
     char out_filename[MAX_FILE_NAME];
 };
 
