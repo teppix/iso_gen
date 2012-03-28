@@ -1,3 +1,4 @@
+#include "isogen_config.h"
 #include "voxelgrid.h"
 #include "settings.h"
 #include "renderer.h"

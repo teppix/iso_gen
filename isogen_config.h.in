@@ -1,0 +1,3 @@
+#define isogen_VERSION_MAJOR @isogen_VERSION_MAJOR@
+#define isogen_VERSION_MINOR @isogen_VERSION_MINOR@
+
