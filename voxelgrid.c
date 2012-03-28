@@ -78,6 +78,7 @@ VoxelGrid *voxelgrid_create(const char *filename, int dim_x, int dim_y, int dim_
         strcpy (voxelgrid->filename, filename);
     
     voxelgrid->tiles = (char *)malloc ( dim_x * dim_y * dim_z );
+	memset(voxelgrid->tiles,0,dim_x*dim_y*dim_z*sizeof(char));
 
     return voxelgrid;
 }
