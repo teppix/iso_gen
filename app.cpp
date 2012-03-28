@@ -3,45 +3,70 @@
 
 
 void draw_numbers(Data &data, Settings &settings){
-    // TODO: optimize this (only loop through each pixel once)
-    // for each number
-    for(unsigned char i=0;i<data.num_faces;i++){
-        // - get the minimum and maximum position of pixels -
-        // minimum position
-        unsigned min_x = 9001; // it's over 9000!
-        unsigned min_y = 9001;
-        // maximum position
-        unsigned max_x = 0;
-        unsigned max_y = 0;
-        // for each pixel
-        for(unsigned x=0;x<data.image_width;x++){
-            for(unsigned y=0;y<data.image_height;y++){
-                // if it's the face we're looking for
-                if(data.pixels[x*3+data.image_width*y*3] == settings.face_color+i){
-                    // - update minimum -
-                    min_x = x<min_x?x:min_x;
-                    min_y = y<min_y?y:min_y;
-                    // - update maximum -
-                    max_x = x>max_x?x:max_x;
-                    max_y = y>max_y?y:max_y;
-                }
+    // - store the min and max coordinates for each face -
+    //
+    // minimum x coordinate
+    unsigned int *min_x = new unsigned int[data.num_faces];
+    // initialize so that every value will be greater
+    memset(min_x,data.image_width,data.num_faces*sizeof(int));
+    // minimum y coordinate
+    unsigned int *min_y = new unsigned int[data.num_faces];
+    // initialize so that every value will be greater
+    memset(min_y,data.image_height,data.num_faces*sizeof(int));
+    // maximum x coordinate
+    unsigned int *max_x = new unsigned int[data.num_faces];
+    // initialize to zero
+    memset(max_x,0,data.num_faces*sizeof(int));
+    // maximum y coordinate
+    unsigned int *max_y = new unsigned int[data.num_faces];
+    // initialize to zero
+    memset(max_y,0,data.num_faces*sizeof(int));
+
+    // keep track if we've found the face at all
+    bool *found = new bool[data.num_faces];
+    memset(found,0,data.num_faces*sizeof(bool));
+
+    // for each pixel
+    for(unsigned x=0;x<data.image_width;x++){
+        for(unsigned y=0;y<data.image_height;y++){
+            // get the pixel value
+            unsigned char pixel_value = data.pixels[x*3+data.image_width*y*3];
+            // if it's not the background or the border
+            if(pixel_value != 255 && pixel_value != 0){
+                // find which face it is
+                unsigned char face = pixel_value - settings.face_color;
+                // update minimum
+                min_x[face] = x<min_x[face]?x:min_x[face];
+                min_y[face] = y<min_y[face]?y:min_y[face];
+                // update maximum
+                max_x[face] = x>max_x[face]?x:max_x[face];
+                max_y[face] = y>max_y[face]?y:max_y[face];
+                // tag face as found
+                found[face] = true;
             }
         }
-        // check that we've found something
-        if(min_x != 9001 && min_x != 9001)
-        {
+    }
+    // for each face
+    for(unsigned face=0;face<data.num_faces;face++){
+        // if we've found it
+        if(found[face]){
             // TODO: draw numbers
             // TODO: remove debug
             // for now, draw a dot in the middle of each face
             // middle x pos
-            unsigned middle_x = (min_x+max_x)/2;
+            unsigned middle_x = (min_x[face]+max_x[face])/2;
             // middle y pos
-            unsigned middle_y = (min_y+max_y)/2;
+            unsigned middle_y = (min_y[face]+max_y[face])/2;
             data.pixels[middle_x*3+middle_y*3*data.image_width] = 0;
             data.pixels[1+middle_x*3+middle_y*3*data.image_width] = 0;
             data.pixels[2+middle_x*3+middle_y*3*data.image_width] = 0;
         }
     }
+    // free our arrays
+    delete[] min_x;
+    delete[] min_y;
+    delete[] max_x;
+    delete[] max_y;
 }
 
 void draw_face(int x, int y, FaceOrientation orientation, unsigned char color, Settings &settings, Data &data){
