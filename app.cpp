@@ -267,6 +267,9 @@ int main(){
     // write file to disk
     image.write("out.png");
 
+    // free pixels
+    delete [] data.pixels;
+
     voxelgrid_free(voxelgrid);
     // return success
     return 0;
