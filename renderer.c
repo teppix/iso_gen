@@ -196,22 +196,17 @@ void draw_numbers(Renderer *renderer, Settings *settings){
     // - store the min and max coordinates for each face -
     //
     // minimum x coordinate
-    unsigned int *min_x = (unsigned int*)malloc(renderer->num_faces*sizeof(int));
-    unsigned int *min_y = (unsigned int*)malloc(renderer->num_faces*sizeof(int));
-    unsigned int *max_x = (unsigned int*)malloc(renderer->num_faces*sizeof(int));
-    unsigned int *max_y = (unsigned int*)malloc(renderer->num_faces*sizeof(int));
-    // keep track if we've found the face at all
-    char *found = (char*)malloc(renderer->num_faces*sizeof(char));
+    unsigned int *accum_x = (unsigned int*)malloc(renderer->num_faces*sizeof(int));
+    unsigned int *accum_y = (unsigned int*)malloc(renderer->num_faces*sizeof(int));
+    // number of pixels per face
+    unsigned int *count = (unsigned int*)malloc(renderer->num_faces*sizeof(int));
 
-    // initialize so that every value will be greater
-    memset(min_y,renderer->image_height,renderer->num_faces*sizeof(int));
-    memset(min_x,renderer->image_width,renderer->num_faces*sizeof(int));
-    // initialize to zero
-    memset(max_x,0,renderer->num_faces*sizeof(int));
-    memset(max_y,0,renderer->num_faces*sizeof(int));
+    // initialize all coordinates to zero
+    memset(accum_y,0,renderer->num_faces*sizeof(int));
+    memset(accum_x,0,renderer->num_faces*sizeof(int));
 
-    // initialize to not found
-    memset(found,0,renderer->num_faces*sizeof(char));
+    // initialize count to zero
+    memset(count,0,renderer->num_faces*sizeof(int));
 
     // for each pixel
     for(x=0;x<renderer->image_width;x++){
@@ -222,36 +217,30 @@ void draw_numbers(Renderer *renderer, Settings *settings){
             if(face_id != 0){
                 // find which face it is
                 face_id--;
-                // update minimum
-                min_x[face_id] = x<min_x[face_id]?x:min_x[face_id];
-                min_y[face_id] = y<min_y[face_id]?y:min_y[face_id];
-                // update maximum
-                max_x[face_id] = x>max_x[face_id]?x:max_x[face_id];
-                max_y[face_id] = y>max_y[face_id]?y:max_y[face_id];
-                // tag face as found
-                found[face_id] = 1;
+                // update coordinate
+                accum_x[face_id] += x;
+                accum_y[face_id] += y;
+                // update pixel count
+                count[face_id]++;
             }
         }
     }
     // for each face
     for(face=0;face<renderer->num_faces;face++){
         // if we've found it
-        if(found[face]){
+        if(count[face]!=0){
             // draw the number in the middle of each face
             // middle x pos
-            // TODO: use better algorithm? weight in all pixels
-            unsigned middle_x = (min_x[face]+max_x[face])/2;
+            unsigned middle_x = accum_x[face]/count[face];
             // middle y pos
-            unsigned middle_y = (min_y[face]+max_y[face])/2;
+            unsigned middle_y = accum_y[face]/count[face];
             draw_number(renderer, middle_x, middle_y,face);
         }
     }
     // free our arrays
-    free(min_x);
-    free(min_y);
-    free(max_x);
-    free(max_y);
-    free(found);
+    free(accum_x);
+    free(accum_y);
+    free(count);
 }
 
 void draw_face(int x, int y, enum FaceOrientation orientation, unsigned int face_id, Settings *settings, Renderer *renderer){
@@ -368,30 +357,42 @@ void draw_vertical_line(int x, int y, Settings *settings, Renderer *renderer, un
 }
 
 void draw_number(Renderer *renderer, unsigned int x, unsigned int y, unsigned int number){
+    // maximum number of digits to print
+    const unsigned int MAX_DIGITS = 5;
     // iterators
     unsigned int row,pixel;
-    unsigned int digit;
+    unsigned int i;
     // offset relative to center of face
-    // TODO: center number
-    int offset=-3;
-    // we want to print one digit even if it's zero
-    unsigned char first_run = 1;
-    // until number is zero
-    while(number != 0 || first_run){
-        // no longer the first run
-        first_run = 0;
+    int offset;
+    // array of digits
+    unsigned char digits[MAX_DIGITS];
+    // initialize digits to 0 (to note that they should not be drawn)
+    memset(digits,0,MAX_DIGITS*sizeof(char));
+    // for each digit in number
+    i=0;
+    do{
         // get last digit
-        digit = number%10;
+        digits[i] = number%10;
         // remove digit from number
         number /= 10;
+        // increase iterator
+        i++;
+    }
+    while(number != 0 && i!=MAX_DIGITS);
+    // center digits
+    offset = 1-i*2;
+    // for each digit
+    while(i>0){
+        // decrease iterator
+        i--;
         // - draw digit -
         // for each row
         for(row=0;row<6;row++){
             // read correct byte
-            unsigned char byte = font_bits[digit/2+5*row];
+            unsigned char byte = font_bits[digits[i]/2+5*row];
             // if it's an odd digit
-            if(digit&1){
-                // move down upper nybble
+            if(digits[i]&1){
+                // get upper nybble
                 byte = byte >> 4;
             }
             // for each pixel
