@@ -5,7 +5,8 @@
 
 Settings *settings_create(){
     Settings *settings = (Settings*)malloc(sizeof(Settings));
-    settings->use_gui = 0;
+    settings->help_option = 0;
+    settings->gui_option = 0;
     // color of the faces
     settings->face_color = 160;
 	// light levels
@@ -19,6 +20,7 @@ Settings *settings_create(){
     // - and face_size*1.5+a pixels high -
     settings->face_size = 24;
     // name of our output file
+    settings->in_filename[0] = '\0';
     strcpy(settings->out_filename,"out.png");
     return settings;
 }

@@ -1,4 +1,5 @@
 
+#include <errno.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -20,7 +21,14 @@ VoxelGrid *voxelgrid_load(const char *filename)
 
     int x,y,z;
 
+    printf ("reading voxels from: %s\n", filename);
     voxelgrid_file = fopen(filename, "r");
+
+    if (voxelgrid_file == NULL) {
+        fprintf (stderr, "File read error: %s\n", strerror (errno));
+        return NULL;
+    }
+
     status = voxelgrid_get_dimensions(voxelgrid_file, &dim_x, &dim_y, &dim_z);
 
     if (status) {
