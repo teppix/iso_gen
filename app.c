@@ -1,4 +1,3 @@
-#include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
@@ -9,7 +8,7 @@
 #include "renderer.h"
 #include "app.h"
 
-static void exit_callback(void)
+static void suggest_help(void)
 {
     fprintf(stderr, "Use -h for help\n");
 }
@@ -30,7 +29,8 @@ static int main_cli (int argc, char **argv, Settings *settings)
     // check input filename
     if (strlen(settings->in_filename) == 0) {
         fprintf (stderr, "Error: No input file specified\n");
-        exit(1);
+        suggest_help();
+        return 1;
     }
 
     // load voxel data from file
@@ -66,9 +66,6 @@ int main(int argc, char **argv) {
     int error = 0;
     int result;
 
-
-    atexit(exit_callback);
-
     // get user settings
     Settings *settings = settings_create();
 
@@ -98,7 +95,8 @@ int main(int argc, char **argv) {
     }
 
     if (error != 0) {
-        exit(1);
+        suggest_help();
+        return 1;
     }
 
     if (settings->help_option) {
