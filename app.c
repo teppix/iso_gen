@@ -105,11 +105,13 @@ int main(int argc, char **argv) {
 
     if (error != 0) {
         suggest_help();
+        settings_free(settings);
         return 1;
     }
 
     if (settings->help_option) {
         show_help();
+        settings_free(settings);
         return 0;
     }
 
