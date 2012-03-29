@@ -1,3 +1,5 @@
 #define isogen_VERSION_MAJOR @isogen_VERSION_MAJOR@
 #define isogen_VERSION_MINOR @isogen_VERSION_MINOR@
 
+#define isogen_USE_GTK @isogen_USE_GTK@
+
