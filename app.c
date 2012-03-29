@@ -22,6 +22,7 @@ static void show_help(void)
             "Arguments:\n"
             "  -i           voxel file to load\n"
             "  -o           write image file\n"
+            "  -n           draw face numbers\n"
             "  -v,-vv       verbosity level"
     );
 }
