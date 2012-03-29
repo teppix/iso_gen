@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <png.h>
 
+#include "utils.h"
 #include "settings.h"
 #include "voxelgrid.h"
 #include "renderer.h"
@@ -10,6 +11,7 @@
 int renderer_save(Renderer *renderer, Settings *settings){
     // iterator
     unsigned int i;
+    log_printf(1, "writing image file: %s\n", settings->out_filename);
     // open file
     FILE *fp = fopen(settings->out_filename,"wb");
     // check that the file was opened ok

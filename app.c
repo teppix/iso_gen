@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "isogen_config.h"
+#include "utils.h"
 #include "voxelgrid.h"
 #include "settings.h"
 #include "renderer.h"
@@ -20,12 +21,14 @@ static void show_help(void)
             "\n"
             "Arguments:\n"
             "  -i           voxel file to load\n"
-            "  -o           write image file"
+            "  -o           write image file\n"
+            "  -v,-vv       verbosity level"
     );
 }
 
 static int main_cli (int argc, char **argv, Settings *settings)
 {
+    log_printf(1, "Entering CLI-mode\n");
     // check input filename
     if (strlen(settings->in_filename) == 0) {
         fprintf (stderr, "Error: No input file specified\n");
@@ -55,6 +58,7 @@ static int main_cli (int argc, char **argv, Settings *settings)
 
 static int main_gui (int argc, char **argv, Settings *settings)
 {
+    log_printf(1, "Entering GUI-mode\n");
     printf ("Gui not implemented yet\n");
     return 0;
 }
@@ -70,7 +74,7 @@ int main(int argc, char **argv) {
     Settings *settings = settings_create();
 
     // Parse arguments
-    while ( (opt = getopt(argc, argv, "hgni:o:")) != -1) {
+    while ( (opt = getopt(argc, argv, "hgni:o:v")) != -1) {
         switch (opt) {
             case 'h':
                 settings->help_option = 1;
@@ -86,6 +90,10 @@ int main(int argc, char **argv) {
                 break;
             case 'o':
                 strcpy (settings->out_filename, optarg);
+                break;
+            case 'v':
+                // increment verbosity level for each 'v'
+                verbosity_level++;
                 break;
             case '?':
                 // invalid argument

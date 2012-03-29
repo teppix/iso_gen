@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "utils.h"
 #include "voxelgrid.h"
 
 #define MAX(a,b) ( (a)>(b) ? (a) : (b) )
@@ -21,7 +22,7 @@ VoxelGrid *voxelgrid_load(const char *filename)
 
     int x,y,z;
 
-    printf ("reading voxels from: %s\n", filename);
+    log_printf (1, "reading voxels from: '%s'\n", filename);
     voxelgrid_file = fopen(filename, "r");
 
     if (voxelgrid_file == NULL) {

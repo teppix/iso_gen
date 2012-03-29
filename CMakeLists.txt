@@ -7,6 +7,7 @@ set (ISOGEN_SRCS
     voxelgrid.c
     settings.c
     renderer.c
+    utils.c
 )
 
 set (isogen_VERSION_MAJOR 0)
