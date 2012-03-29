@@ -10,7 +10,7 @@
 
 int cli_main (int argc, char **argv, Settings *settings)
 {
-    log_printf(1, "Entering CLI-mode\n");
+    log_printf(2, "Entering CLI-mode\n");
     // check input filename
     if (strlen(settings->in_filename) == 0) {
         fprintf (stderr, "Error: No input file specified\n");
