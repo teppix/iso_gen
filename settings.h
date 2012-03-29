@@ -6,6 +6,7 @@
 typedef struct Settings Settings;
 
 struct Settings{
+    unsigned int use_gui;
     // the size of each face
     unsigned int face_size;
     // base color for each face

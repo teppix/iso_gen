@@ -38,8 +38,6 @@ static int main_gui (int argc, char **argv, Settings *settings)
 
 int main(int argc, char **argv) {
 
-    int opt_use_gui = 0;
-    
     int opt;
 
     int result;
@@ -51,14 +49,14 @@ int main(int argc, char **argv) {
     while ( (opt = getopt(argc, argv, "gn")) != -1) {
         switch (opt) {
             case 'g':
-                opt_use_gui = 1;
+                settings->use_gui = 1;
                 break;
             case 'n':
                 settings->numbered_faces = 1;
         }
     }
 
-    if (opt_use_gui) {
+    if (settings->use_gui) {
         result = main_gui (argc, argv, settings);
     } else {
         result = main_cli (argc, argv, settings);

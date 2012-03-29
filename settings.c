@@ -5,6 +5,7 @@
 
 Settings *settings_create(){
     Settings *settings = (Settings*)malloc(sizeof(Settings));
+    settings->use_gui = 0;
     // color of the faces
     settings->face_color = 160;
 	// light levels
