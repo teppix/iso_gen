@@ -8,6 +8,8 @@ set (ISOGEN_SRCS
     settings.c
     renderer.c
     utils.c
+    cli.c
+    gui.c
 )
 
 set (isogen_VERSION_MAJOR 0)

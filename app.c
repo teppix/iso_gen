@@ -7,9 +7,11 @@
 #include "voxelgrid.h"
 #include "settings.h"
 #include "renderer.h"
+#include "cli.h"
+#include "gui.h"
 #include "app.h"
 
-static void suggest_help(void)
+void suggest_help(void)
 {
     fprintf(stderr, "Use -h for help\n");
 }
@@ -25,44 +27,6 @@ static void show_help(void)
             "  -v,-vv       verbosity level"
     );
 }
-
-static int main_cli (int argc, char **argv, Settings *settings)
-{
-    log_printf(1, "Entering CLI-mode\n");
-    // check input filename
-    if (strlen(settings->in_filename) == 0) {
-        fprintf (stderr, "Error: No input file specified\n");
-        suggest_help();
-        return 1;
-    }
-
-    // load voxel data from file
-    VoxelGrid *voxelgrid = voxelgrid_load (settings->in_filename);
-
-    // initialize renderer
-    Renderer *renderer = renderer_create();
-    // render
-    renderer_render(renderer, settings, voxelgrid);
-    // write output file
-    renderer_save(renderer, settings);
-    // clean up render data
-    renderer_free(renderer);
-
-    voxelgrid_free(voxelgrid);
-
-
-    // return success
-    return 0;
-}
-
-
-static int main_gui (int argc, char **argv, Settings *settings)
-{
-    log_printf(1, "Entering GUI-mode\n");
-    printf ("Gui not implemented yet\n");
-    return 0;
-}
-
 
 int main(int argc, char **argv) {
 
@@ -128,9 +92,9 @@ int main(int argc, char **argv) {
     }
 
     if (settings->gui_option) {
-        result = main_gui (argc, argv, settings);
+        result = gui_main (argc, argv, settings);
     } else {
-        result = main_cli (argc, argv, settings);
+        result = cli_main (argc, argv, settings);
     }
 
     // free settings
