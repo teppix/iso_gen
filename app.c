@@ -17,10 +17,9 @@ static void suggest_help(void)
 static void show_help(void)
 {
     puts(
-            "usage: isogen [OPTION]\n"
+            "usage: isogen [OPTIONS] [voxel-file]\n"
             "\n"
             "Arguments:\n"
-            "  -i           voxel file to load\n"
             "  -o           write image file\n"
             "  -n           draw face numbers\n"
             "  -v,-vv       verbosity level"
@@ -70,6 +69,8 @@ int main(int argc, char **argv) {
     int opt;
     int error = 0;
     int result;
+    int i;
+    int argnum;
 
     // get user settings
     Settings *settings = settings_create();
@@ -86,9 +87,6 @@ int main(int argc, char **argv) {
             case 'n':
                 settings->numbered_faces = 1;
                 break;
-            case 'i':
-                strcpy (settings->in_filename, optarg);
-                break;
             case 'o':
                 strcpy (settings->out_filename, optarg);
                 break;
@@ -98,6 +96,20 @@ int main(int argc, char **argv) {
                 break;
             case '?':
                 // invalid argument
+                error = 1;
+                break;
+        }
+    }
+
+    // parse remaining arguments
+    for (i=optind, argnum=0; i<argc; i++, argnum++) {
+        switch (argnum) {
+            case 0: // == input file
+                strcpy (settings->in_filename, argv[i]);
+                break;
+
+            default: // invalid number of arguments
+                fprintf (stderr, "Too many arguments\n");
                 error = 1;
                 break;
         }
