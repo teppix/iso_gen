@@ -200,6 +200,8 @@ void draw_numbers(Renderer *renderer, Settings *settings){
     unsigned int *accum_y = (unsigned int*)malloc(renderer->num_faces*sizeof(int));
     // number of pixels per face
     unsigned int *count = (unsigned int*)malloc(renderer->num_faces*sizeof(int));
+    // which number to draw on each face
+    unsigned int *face_number = (unsigned int*)malloc(renderer->num_faces*sizeof(int));
 
     // initialize all coordinates to zero
     memset(accum_y,0,renderer->num_faces*sizeof(int));
@@ -208,9 +210,15 @@ void draw_numbers(Renderer *renderer, Settings *settings){
     // initialize count to zero
     memset(count,0,renderer->num_faces*sizeof(int));
 
+    // initialize face numbers to zero
+    memset(face_number,0,renderer->num_faces*sizeof(int));
+
+    // start with zero as current face
+    face =0;
+
     // for each pixel
-    for(x=0;x<renderer->image_width;x++){
-        for(y=0;y<renderer->image_height;y++){
+    for(y=0;y<renderer->image_height;y++){
+        for(x=0;x<renderer->image_width;x++){
             // get the pixel value
             unsigned int face_id = renderer->face_map[x+renderer->image_width*y];
             // if it's not the background
@@ -222,6 +230,12 @@ void draw_numbers(Renderer *renderer, Settings *settings){
                 accum_y[face_id] += y;
                 // update pixel count
                 count[face_id]++;
+                // if this is the first time we've encountered this face
+                if(count[face_id]==1){
+                    // update face number
+                    face_number[face_id] = face;
+                    face++;
+                }
             }
         }
     }
@@ -234,7 +248,7 @@ void draw_numbers(Renderer *renderer, Settings *settings){
             unsigned middle_x = accum_x[face]/count[face];
             // middle y pos
             unsigned middle_y = accum_y[face]/count[face];
-            draw_number(renderer, middle_x, middle_y,face);
+            draw_number(renderer, middle_x, middle_y,face_number[face]);
         }
     }
     // free our arrays
@@ -380,7 +394,7 @@ void draw_number(Renderer *renderer, unsigned int x, unsigned int y, unsigned in
     }
     while(number != 0 && i!=MAX_DIGITS);
     // center digits
-    offset = 1-i*2;
+    offset = i*2-1;
     // for each digit
     while(i>0){
         // decrease iterator
@@ -412,6 +426,6 @@ void draw_number(Renderer *renderer, unsigned int x, unsigned int y, unsigned in
                 }
             }
         }
-        offset+= 4;
+        offset-= 4;
     }
 }
