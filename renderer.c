@@ -78,7 +78,7 @@ void renderer_free(Renderer *renderer){
 }
 
 void renderer_render(Renderer *renderer, Settings *settings, VoxelGrid *voxelgrid){
-    unsigned x,y,z;
+    int x,y,z;
     unsigned int origin_x;
     unsigned int origin_y;
     unsigned char face_id;
@@ -93,8 +93,8 @@ void renderer_render(Renderer *renderer, Settings *settings, VoxelGrid *voxelgri
     // final image width (padded by one voxel)
     renderer->image_width = settings->face_size*(voxelgrid->dim_x+voxelgrid->dim_y+1);
     // where to place the 0,0,0 voxel
-    origin_x = voxelgrid->dim_x*settings->face_size + settings->face_size/2;
-    origin_y = (voxelgrid->dim_x+voxelgrid->dim_y-2)*settings->face_size/2+ settings->face_size/4;
+    origin_x = settings->face_size + settings->face_size/2;
+    origin_y = (voxelgrid->dim_y)*settings->face_size/2+ settings->face_size/4;
     // pixels for final image
     renderer->pixels = (unsigned char*)malloc((3*renderer->image_height*renderer->image_width)*sizeof(char));
     // set all pixels to black
@@ -112,25 +112,25 @@ void renderer_render(Renderer *renderer, Settings *settings, VoxelGrid *voxelgri
     // set all face indices to 0 (no face)
     memset(renderer->face_map,0,renderer->image_height*renderer->image_width*sizeof(int));
     // for each voxel 
-    for(x=0;x<voxelgrid->dim_x;x++){
+    for(x=voxelgrid->dim_x-1;x>-1;x--){
         for(y=0;y<voxelgrid->dim_y;y++){
             for(z=0;z<voxelgrid->dim_z;z++){
                 // if the current voxel is filled
                 if (VOXEL (voxelgrid, x, y, z) == 1) {
                     // TODO: flip x axis
                     // placement relative to other voxels
-                    int offset_x = y-x;
+                    int offset_x = y+x;
                     int pos_x = origin_x+(offset_x)*(settings->face_size);
-                    int offset_y = -x-y+2*z;
+                    int offset_y = x-y+2*z;
                     int pos_y = origin_y+(offset_y)*(settings->face_size/2);
                     // -- left face --
                     // - check visibility (to avoid increasing the id for faces not visible) -
                     // should we draw the face?
                     char face_visible = 1;
                     // unless we're on the far left side
-                    if(x<voxelgrid->dim_x-1) {
+                    if(x>0) {
                         // check if there's a voxel directly in front of the left face
-                        if(VOXEL(voxelgrid, x+1, y, z)==1){
+                        if(VOXEL(voxelgrid, x-1, y, z)==1){
                             // don't draw the face (will not be visible anyway)
                             face_visible=0;
                         }
