@@ -94,7 +94,7 @@ void renderer_render(Renderer *renderer, Settings *settings, VoxelGrid *voxelgri
     renderer->image_width = settings->face_size*(voxelgrid->dim_x+voxelgrid->dim_y+1);
     // where to place the 0,0,0 voxel
     origin_x = settings->face_size + settings->face_size/2;
-    origin_y = (voxelgrid->dim_y)*settings->face_size/2+ settings->face_size/4;
+    origin_y = (voxelgrid->dim_y)*settings->face_size/2-settings->face_size/4;
     // pixels for final image
     renderer->pixels = (unsigned char*)malloc((3*renderer->image_height*renderer->image_width)*sizeof(char));
     // set all pixels to black
