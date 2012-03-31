@@ -15,6 +15,8 @@ Settings *settings_create(){
 	settings->light[2] = 50;
     // don't draw numbers by default
     settings->numbered_faces = 0;
+    // draw outlines by default
+    settings->outlines = 1;
     // face size (in screen space)
     // - each voxel will be (face_size+1)*2 pixels wide -
     // - and face_size*1.5+a pixels high -

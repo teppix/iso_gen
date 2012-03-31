@@ -16,6 +16,8 @@ struct Settings{
 	unsigned char light[3];
     // should we draw numbers on the faces?
     unsigned char numbered_faces;
+    // should we draw outlines?
+    unsigned char outlines;
 	// filename of output file
     char in_filename[MAX_FILE_NAME];
     char out_filename[MAX_FILE_NAME];
