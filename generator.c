@@ -13,6 +13,12 @@ Generator *generator_create(GeneratorType type,const char *args)
             generator->generator_instance = sphere_generator_create(args);
             break;
     }
+    // if there was an error creating the generator instance
+    if(generator->generator_instance == NULL)
+    {
+        free(generator);
+        return NULL;
+    }
     return generator;
 }
 

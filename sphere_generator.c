@@ -8,7 +8,13 @@ SphereGenerator *sphere_generator_create(const char *args)
 {
     // TODO: parse arguments
     SphereGenerator *sphere_generator = malloc(sizeof(SphereGenerator));
-    sphere_generator->radius = 10;
+    sphere_generator->radius = atoi(args);
+    if(sphere_generator->radius == 0)
+    {
+        log_printf(0, "Error: invalid radius\n");
+        free(sphere_generator);
+        return NULL;
+    }
     return sphere_generator;
 }
 
