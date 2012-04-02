@@ -3,6 +3,8 @@
 
 #define MAX_FILE_NAME 1024
 
+#include "generator.h"
+
 typedef struct Settings Settings;
 
 struct Settings{
@@ -18,6 +20,8 @@ struct Settings{
     unsigned char numbered_faces;
     // should we draw outlines?
     unsigned char outlines;
+    // the generator to use
+    Generator *generator;
 	// filename of output file
     char in_filename[MAX_FILE_NAME];
     char out_filename[MAX_FILE_NAME];

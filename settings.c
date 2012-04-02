@@ -20,7 +20,9 @@ Settings *settings_create(){
     // face size (in screen space)
     // - each voxel will be (face_size+1)*2 pixels wide -
     // - and face_size*1.5+a pixels high -
-    settings->face_size = 24;
+    settings->face_size = 12;
+    // no default generator
+    settings->generator = NULL;
     // name of our output file
     settings->in_filename[0] = '\0';
     strcpy(settings->out_filename,"out.png");

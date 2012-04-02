@@ -95,9 +95,11 @@ VoxelGrid *voxelgrid_create(const char *filename, int dim_x, int dim_y, int dim_
 
 void voxelgrid_free (VoxelGrid *voxelgrid)
 {
-    if (voxelgrid->tiles != NULL)
-        free (voxelgrid->tiles);
-    free (voxelgrid);
+    if(voxelgrid != NULL){
+        if (voxelgrid->tiles != NULL)
+            free (voxelgrid->tiles);
+        free (voxelgrid);
+    }
 }
 
 

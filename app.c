@@ -5,6 +5,7 @@
 #include "isogen_config.h"
 #include "utils.h"
 #include "voxelgrid.h"
+#include "generator.h"
 #include "settings.h"
 #include "renderer.h"
 #include "cli.h"
@@ -24,6 +25,7 @@ static void show_help(void)
             "Arguments:\n"
             "  -o           write image file\n"
             "  -n           draw face numbers\n"
+            "  -s  radius   generate sphere\n"
             "  -v,-vv       verbosity level"
     );
 }
@@ -40,7 +42,7 @@ int main(int argc, char **argv) {
     Settings *settings = settings_create();
 
     // Parse arguments
-    while ( (opt = getopt(argc, argv, "hgni:o:v")) != -1) {
+    while ( (opt = getopt(argc, argv, "hgns:i:o:v")) != -1) {
         switch (opt) {
             case 'h':
                 settings->help_option = 1;
@@ -54,6 +56,9 @@ int main(int argc, char **argv) {
             case 'o':
                 strcpy (settings->out_filename, optarg);
                 break;
+            case 's':
+                settings->generator = generator_create(GENERATOR_SPHERE,optarg);
+                break;
             case 'v':
                 // increment verbosity level for each 'v'
                 verbosity_level++;
@@ -65,17 +70,20 @@ int main(int argc, char **argv) {
         }
     }
 
-    // parse remaining arguments
-    for (i=optind, argnum=0; i<argc; i++, argnum++) {
-        switch (argnum) {
-            case 0: // == input file
-                strcpy (settings->in_filename, argv[i]);
-                break;
+    // unless the user specified a generator
+    if(settings->generator == NULL){
+        // parse remaining arguments
+        for (i=optind, argnum=0; i<argc; i++, argnum++) {
+            switch (argnum) {
+                case 0: // == input file
+                    strcpy (settings->in_filename, argv[i]);
+                    break;
 
-            default: // invalid number of arguments
-                fprintf (stderr, "Too many arguments\n");
-                error = 1;
-                break;
+                default: // invalid number of arguments
+                    fprintf (stderr, "Too many arguments\n");
+                    error = 1;
+                    break;
+            }
         }
     }
 
@@ -95,6 +103,12 @@ int main(int argc, char **argv) {
         result = gui_main (argc, argv, settings);
     } else {
         result = cli_main (argc, argv, settings);
+    }
+
+    // free generator
+    if(settings->generator != NULL)
+    {
+        generator_free(settings->generator);
     }
 
     // free settings

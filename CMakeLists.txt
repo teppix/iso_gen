@@ -4,6 +4,8 @@ project (isogen)
 set (ISOGEN_SRCS
     app.c
     voxelgrid.c
+    sphere_generator.c
+    generator.c
     settings.c
     renderer.c
     utils.c
@@ -28,6 +30,7 @@ else ()
     set (isogen_USE_GTK 0)
 endif ()
 
+
 configure_file(
     "${PROJECT_SOURCE_DIR}/isogen_config.h.in"
     "${PROJECT_BINARY_DIR}/isogen_config.h"
@@ -35,7 +38,10 @@ configure_file(
 
 add_executable (isogen ${ISOGEN_SRCS} ${ISOGEN_GTK_SRCS})
 
+add_library(math STATIC IMPORTED)
+
 target_link_libraries (isogen ${PNG_LIBRARY})
 target_link_libraries (isogen ${GTK2_LIBRARIES})
+target_link_libraries (isogen m)
 
 set(CMAKE_BUILD_TYPE Debug)

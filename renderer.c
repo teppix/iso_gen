@@ -9,8 +9,15 @@
 #include "font.xbm"
 
 int renderer_save(Renderer *renderer, Settings *settings){
+    // TODO: find out why writing the file is so slow...
     // iterator
     unsigned int i;
+    // if there's no pixels to write
+    if(renderer->pixels == NULL)
+    {
+        // return error
+        return 1;
+    }
     log_printf(1, "writing image file: %s\n", settings->out_filename);
     // open file
     FILE *fp = fopen(settings->out_filename,"wb");
@@ -85,9 +92,21 @@ void renderer_render(Renderer *renderer, Settings *settings, VoxelGrid *voxelgri
     unsigned int face_id;
     unsigned int *face_map;
     // free previous pixels
-    // TODO: reuse if image size hasn't changed
+    // TODO: reuse if image size hasn't changed?
     if(renderer->pixels != NULL){
         free(renderer->pixels);
+    }
+    // free previous face map
+    // TODO: reuse if the image size hasn't changed?
+    if(renderer->face_map != NULL){
+        // free face map
+        free(renderer->face_map);
+    }
+    // if the voxelgrid isn't valid
+    if(voxelgrid == NULL)
+    {
+        // return without doing anything
+        return;
     }
     // final image height (padded by one voxel)
     renderer->image_height = (voxelgrid->dim_x+voxelgrid->dim_y+2*voxelgrid->dim_z+1)*settings->face_size/2;
@@ -102,12 +121,6 @@ void renderer_render(Renderer *renderer, Settings *settings, VoxelGrid *voxelgri
     memset(renderer->pixels,255,3*renderer->image_height*renderer->image_width*sizeof(char));
     // id of the currently drawn face
     face_id = 1;
-    // free previous face map
-    // TODO: reuse if the image size hasn't changed
-    if(renderer->face_map != NULL){
-        // free face map
-        free(renderer->face_map);
-    }
     // store the face index of each pixel
     renderer->face_map = (unsigned int*)malloc(renderer->image_height*renderer->image_width*sizeof(unsigned int));
     // set all face indices to 0 (no face)
