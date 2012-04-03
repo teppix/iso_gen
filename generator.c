@@ -48,4 +48,5 @@ void generator_free(Generator* generator)
             random_generator_free(generator->generator_instance);
             break;
     }
+    free(generator);
 }

@@ -1,6 +1,5 @@
 #include <string.h>
 #include <stdlib.h>
-#include <png.h>
 
 #include "utils.h"
 #include "settings.h"
@@ -9,74 +8,31 @@
 #include "font.xbm"
 
 int renderer_save(Renderer *renderer, Settings *settings){
-    // TODO: find out why writing the file is so slow...
-    // iterator
-    unsigned int i;
-    // if there's no pixels to write
-    if(renderer->pixels == NULL)
-    {
-        // return error
+    // check that everything is ok
+    if(renderer->surface == NULL){
         return 1;
     }
-    log_printf(1, "writing image file: %s\n", settings->out_filename);
-    // open file
-    FILE *fp = fopen(settings->out_filename,"wb");
-    // check that the file was opened ok
-    if(!fp){
-        return 1;
-    }
-    // initialize libpng
-    // TODO: error checking
-    // the two main structures
-    png_structp png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, (png_voidp)NULL,NULL, NULL);
-    png_infop info_ptr = png_create_info_struct(png_ptr);
-    // if we couldn't create the info pointer
-    if(!info_ptr){
-        // destroy the png pointer and return
-        png_destroy_write_struct(&png_ptr,(png_infopp)NULL);
-        return 1;
-    }
-    // initialize libpng io
-    png_init_io(png_ptr,fp);
-    // set file info
-    // TODO: write greyscale?
-    png_set_IHDR(png_ptr,info_ptr,renderer->image_width, renderer->image_height,8,PNG_COLOR_TYPE_RGB,
-            PNG_INTERLACE_NONE,PNG_COMPRESSION_TYPE_DEFAULT,PNG_FILTER_TYPE_DEFAULT);
-    // - hand pixels to libpng -
-    // array of row pointers
-    png_bytep *row_pointers = (png_bytep*)malloc(renderer->image_height*sizeof(png_bytep));
-    // for each row in image
-    for(i=0;i<renderer->image_height;i++){
-        // point row pointer to correct value
-        // note: inverted since its been drawn upside down
-        row_pointers[i] = renderer->pixels+(renderer->image_height-i-1)*3*renderer->image_width;
-    }
-    // register row pointers with libpng
-    png_set_rows(png_ptr, info_ptr, row_pointers);
-    // write file to disk
-    png_write_png(png_ptr,info_ptr,PNG_TRANSFORM_IDENTITY,NULL);
-    // free libpng
-    png_destroy_write_struct(&png_ptr,&info_ptr);
-    // close file
-    fclose(fp);
-    // free row pointers
-    free(row_pointers);
-    // return success
+    // let cairo handle the writing for us
+    cairo_surface_write_to_png(renderer->surface,settings->out_filename);
     return 0;
 }
 
 Renderer *renderer_create(){
     Renderer *renderer = (Renderer*)malloc(sizeof(Renderer));
     // set pointers to NULL to note that they're unallocated
-    renderer->pixels = NULL;
+    renderer->surface = NULL;
     renderer->face_map = NULL;
     return renderer;
 }
 
 void renderer_free(Renderer *renderer){
-    // free pixels
     if(renderer->pixels != NULL){
+        // free pixels (probably isn't necessary, but make sure)
         free(renderer->pixels);
+    }
+    if(renderer->surface != NULL){
+        // free surface
+        cairo_surface_destroy(renderer->surface);
     }
     if(renderer->face_map != NULL){
         // free face map
@@ -91,11 +47,6 @@ void renderer_render(Renderer *renderer, Settings *settings, VoxelGrid *voxelgri
     unsigned int origin_y;
     unsigned int face_id;
     unsigned int *face_map;
-    // free previous pixels
-    // TODO: reuse if image size hasn't changed?
-    if(renderer->pixels != NULL){
-        free(renderer->pixels);
-    }
     // free previous face map
     // TODO: reuse if the image size hasn't changed?
     if(renderer->face_map != NULL){
@@ -112,19 +63,20 @@ void renderer_render(Renderer *renderer, Settings *settings, VoxelGrid *voxelgri
     renderer->image_height = (voxelgrid->dim_x+voxelgrid->dim_y+2*voxelgrid->dim_z+1)*settings->face_size/2;
     // final image width (padded by one voxel)
     renderer->image_width = settings->face_size*(voxelgrid->dim_x+voxelgrid->dim_y+1);
+    // image stride
+    renderer->stride = cairo_format_stride_for_width(CAIRO_FORMAT_RGB24,renderer->image_width);
+    // temporary storage for the pixel data
+    renderer->pixels = (int32_t *)malloc(renderer->image_height*renderer->stride);
+    // initialize pixels
+    memset(renderer->pixels,0xffffff,renderer->image_height*renderer->stride);
     // where to place the 0,0,0 voxel
     origin_x = settings->face_size + settings->face_size/2;
     origin_y = (voxelgrid->dim_y)*settings->face_size/2-settings->face_size/4;
-    // pixels for final image
-    renderer->pixels = (unsigned char*)malloc((3*renderer->image_height*renderer->image_width)*sizeof(char));
-    // set all pixels to white
-    memset(renderer->pixels,255,3*renderer->image_height*renderer->image_width*sizeof(char));
     // id of the currently drawn face
     face_id = 1;
     // store the face index of each pixel
-    renderer->face_map = (unsigned int*)malloc(renderer->image_height*renderer->image_width*sizeof(unsigned int));
-    // set all face indices to 0 (no face)
-    memset(renderer->face_map,0,renderer->image_height*renderer->image_width*sizeof(int));
+    renderer->face_map = (unsigned int *)malloc(renderer->image_height*renderer->stride);
+    memset(renderer->face_map,0,renderer->image_height*renderer->stride);
     // for each voxel 
     for(x=voxelgrid->dim_x-1;x>-1;x--){
         for(y=0;y<voxelgrid->dim_y;y++){
@@ -159,6 +111,14 @@ void renderer_render(Renderer *renderer, Settings *settings, VoxelGrid *voxelgri
     if(settings->numbered_faces){
         draw_numbers(renderer, settings);
     }
+    // - create cairo surface -
+    // free previous surface
+    // TODO: reuse if image size hasn't changed?
+    if(renderer->surface != NULL){
+        cairo_surface_destroy(renderer->surface);
+    }
+    // create surface
+    renderer->surface = cairo_image_surface_create_for_data((unsigned char*)renderer->pixels,CAIRO_FORMAT_RGB24,renderer->image_width, renderer->image_height, renderer->stride);
 }
 
 void draw_numbers(Renderer *renderer, Settings *settings){
@@ -229,26 +189,33 @@ void draw_numbers(Renderer *renderer, Settings *settings){
 }
 
 void draw_face(int x, int y, enum FaceOrientation orientation, unsigned int face_id, Settings *settings, Renderer *renderer){
+    // outline color
+    // TODO: move this to the settings?
+    int32_t outline_color = 0;
+    // face color
+    int32_t face_color;
     // used for filling faces
     unsigned x_pos = 1;
     unsigned y_pos = 1;
     if(orientation == FACE_TOP){
         // top face
+        // TODO: make prettier
+        face_color = COLOR(settings->face_color+settings->light[2],settings->face_color+settings->light[2],settings->face_color+settings->light[2]);
         // - fill -
         // offset y (since we're drawing the top face)
         y_pos = settings->face_size;
         // for the entire width of the face
         while(x_pos<settings->face_size){
             // draw a line
-            draw_diagonal_line(x+x_pos,y+y_pos,-1,settings,renderer,settings->face_color+settings->light[2],face_id);
+            draw_diagonal_line(x+x_pos,y+y_pos,-1,settings,renderer,face_color,face_id);
             // offset in y
             y_pos++;
             // draw a line
-            draw_diagonal_line(x+x_pos,y+y_pos,-1,settings,renderer,settings->face_color+settings->light[2],face_id);
+            draw_diagonal_line(x+x_pos,y+y_pos,-1,settings,renderer,face_color,face_id);
             // offset in x
             x_pos++;
             // draw a second line (two steps in x for each step in y)
-            draw_diagonal_line(x+x_pos,y+y_pos,-1,settings,renderer,settings->face_color+settings->light[2],face_id);
+            draw_diagonal_line(x+x_pos,y+y_pos,-1,settings,renderer,face_color,face_id);
             // offset in x
             x_pos++;
         }
@@ -256,18 +223,16 @@ void draw_face(int x, int y, enum FaceOrientation orientation, unsigned int face
         // if user wants us to
         if(settings->outlines){
             // draw bottom left
-            draw_diagonal_line(x,y+settings->face_size,1,settings,renderer,0,0);
+            draw_diagonal_line(x,y+settings->face_size,1,settings,renderer,outline_color,0);
             // draw bottom right
-            draw_diagonal_line(x,y+settings->face_size,-1,settings,renderer,0,0);
+            draw_diagonal_line(x,y+settings->face_size,-1,settings,renderer,outline_color,0);
             // draw top left
-            draw_diagonal_line(x-settings->face_size,y+settings->face_size+settings->face_size/2,1,settings,renderer,0,0);
+            draw_diagonal_line(x-settings->face_size,y+settings->face_size+settings->face_size/2,1,settings,renderer,outline_color,0);
             // draw top right
-            draw_diagonal_line(x+settings->face_size,y+settings->face_size+settings->face_size/2,-1,settings,renderer,0,0);
+            draw_diagonal_line(x+settings->face_size,y+settings->face_size+settings->face_size/2,-1,settings,renderer,outline_color,0);
             // add pixel at top
-            unsigned int pixel = 3*(x+renderer->image_width*(y+2*settings->face_size));
-            renderer->pixels[pixel] = 0;
-            renderer->pixels[1+pixel] = 0;
-            renderer->pixels[2+pixel] = 0;
+            unsigned int pixel = (x+renderer->image_width*(renderer->image_height-y-2*settings->face_size));
+            renderer->pixels[pixel] = COLOR(0,0,0);
         }
     }
     else{
@@ -275,74 +240,69 @@ void draw_face(int x, int y, enum FaceOrientation orientation, unsigned int face
         // color of the face
         unsigned char color = orientation == FACE_LEFT ? settings->light[1]:settings->light[0];
         color += settings->face_color;
+        face_color = COLOR(color,color,color);
         // - fill -
         // for the entire height of the face
         for(y_pos=0;y_pos <= settings->face_size;y_pos++){
             // draw a line, offset in y
-            draw_diagonal_line(x,y+y_pos,direction,settings,renderer,color,face_id);
+            draw_diagonal_line(x,y+y_pos,direction,settings,renderer,face_color,face_id);
         }
         // - draw outlines -
         // if user wants us to
         if(settings->outlines){
             // draw bottom
-            draw_diagonal_line(x,y,direction,settings,renderer,0,0);
+            draw_diagonal_line(x,y,direction,settings,renderer,outline_color,0);
             // draw top
-            draw_diagonal_line(x,y+settings->face_size,direction,settings,renderer,0,0);
+            draw_diagonal_line(x,y+settings->face_size,direction,settings,renderer,outline_color,0);
             // draw middle edge
-            draw_vertical_line(x,y,settings,renderer,0,0);
+            draw_vertical_line(x,y,settings,renderer,outline_color,0);
             // draw side edge
-            draw_vertical_line(x+direction*settings->face_size,y+settings->face_size/2,settings,renderer,0,0);
+            draw_vertical_line(x+direction*settings->face_size,y+settings->face_size/2,settings,renderer,outline_color,0);
         }
     }
 }
 
-inline void draw_diagonal_line(int x, int y, int direction, Settings *settings, Renderer *renderer, unsigned char color, unsigned int face_id){
+inline void draw_diagonal_line(int x, int y, int direction, Settings *settings,Renderer *renderer, int32_t color, unsigned int face_id){
     // iterator
     unsigned int i;
     // current pixel index
     int pixel;
     // y should skip an entire row each time
-    y*=renderer->image_width;
+    y =(renderer->image_height - y)*renderer->image_width;
     // util we've drawn the entire line
     for(i=0;i<(int)settings->face_size;i+=2){
         // draw first pixel
-        pixel = 3*(x+y);
+        pixel = x+y;
         renderer->pixels[pixel] = color;
-        renderer->pixels[1+pixel] = color;
-        renderer->pixels[2+pixel] = color;
         renderer->face_map[x+y] = face_id;
         // increase x
         x+=direction;
-        pixel = 3*(x+y);
+        pixel = x+y;
         // draw second pixel
         renderer->pixels[pixel] = color;
-        renderer->pixels[1+pixel] = color;
-        renderer->pixels[2+pixel] = color;
         renderer->face_map[x+y] = face_id;
         // increase x
         x+=direction;
         // increase y
-        y+= renderer->image_width;
+        y-= renderer->image_width;
     }
 }
 
-inline void draw_vertical_line(int x, int y, Settings *settings, Renderer *renderer, unsigned char color, unsigned int face_id){
+inline void draw_vertical_line(int x, int y, Settings *settings, Renderer *renderer, int32_t color, unsigned int face_id){
     // iterator
     int i;
     // current pixel index
     int pixel;
     // y should skip an entire row each time
-    y*=renderer->image_width;
+    y =(renderer->image_height - y)*renderer->image_width;
     // until we've drawn the entire line
     for(i=0;i<(int)settings->face_size;i++){
-        pixel = 3*(x+y);
+        pixel = x+y;
         // draw pixel
         renderer->pixels[pixel] = color;
-        renderer->pixels[1+pixel] = color;
-        renderer->pixels[2+pixel] = color;
         renderer->face_map[x+y] = face_id;
         // increase y
-        y+= renderer->image_width;
+        y-= renderer->image_width;
     }
 }
 
@@ -396,9 +356,7 @@ void draw_number(Renderer *renderer, unsigned int x, unsigned int y, unsigned in
                 if(bit)
                 {
                     // add it to the image
-                    renderer->pixels[(pixel+x-offset)*3+(4+y-row)*3*renderer->image_width] = 0;
-                    renderer->pixels[1+(pixel+x-offset)*3+(4+y-row)*3*renderer->image_width] = 0;
-                    renderer->pixels[2+(pixel+x-offset)*3+(4+y-row)*3*renderer->image_width] = 0;
+                    renderer->pixels[pixel+x-offset+(y+row-2)*renderer->image_width] = 0;
                 }
             }
         }

@@ -11,7 +11,7 @@ RandomGenerator *random_generator_create(const char *args)
     char *pch;
     RandomGenerator *random_generator = malloc(sizeof(RandomGenerator));
     // make a copy of the args ( that we are allowed to edit)
-    input_string = malloc(strlen(args)*sizeof(char));
+    input_string = malloc((1+strlen(args))*sizeof(char));
     strcpy(input_string, args);
     // - parse arguments -
     // split based on commas
@@ -33,6 +33,7 @@ RandomGenerator *random_generator_create(const char *args)
     while(pch != NULL){
         pch = strtok(NULL,",");
     }
+    free(input_string);
     return random_generator;
 }
 
