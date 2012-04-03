@@ -272,11 +272,14 @@ void draw_face(int x, int y, enum FaceOrientation orientation, unsigned int face
     }
     else{
         char direction = orientation == FACE_LEFT ? -1:1;
+        // color of the face
+        unsigned char color = orientation == FACE_LEFT ? settings->light[1]:settings->light[0];
+        color += settings->face_color;
         // - fill -
         // for the entire height of the face
         for(y_pos=0;y_pos <= settings->face_size;y_pos++){
             // draw a line, offset in y
-            draw_diagonal_line(x,y+y_pos,direction,settings,renderer,settings->face_color+settings->light[0],face_id);
+            draw_diagonal_line(x,y+y_pos,direction,settings,renderer,color,face_id);
         }
         // - draw outlines -
         // if user wants us to
