@@ -18,9 +18,6 @@ set (isogen_VERSION_MINOR 1)
 
 include_directories ("${PROJECT_BINARY_DIR}")
 
-find_package (PNG REQUIRED)
-include_directories (${PNG_INCLUDE_DIR})
-
 find_package (GTK2)
 if (GTK2_FOUND)
     include_directories (${GTK2_INCLUDE_DIRS})
@@ -41,7 +38,6 @@ add_executable (isogen ${ISOGEN_SRCS} ${ISOGEN_GTK_SRCS})
 
 add_library(math STATIC IMPORTED)
 
-target_link_libraries (isogen ${PNG_LIBRARY})
 target_link_libraries (isogen ${GTK2_LIBRARIES})
 target_link_libraries (isogen m)
 
