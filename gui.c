@@ -50,11 +50,6 @@ static void iso_view_expose (GtkWidget *widget, GdkEventExpose *event, GuiContex
     cairo_set_source_surface (cr, source, 0, 0);
     cairo_paint (cr);
 
-    // text
-    cairo_set_source_rgb (cr, 0, 0, 0);
-    cairo_move_to (cr, 10, 10);
-    cairo_show_text (cr, buffer);
-
     cairo_destroy (cr);
     cairo_surface_destroy (source);
 }
