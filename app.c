@@ -23,10 +23,11 @@ static void show_help(void)
             "usage: isogen [OPTIONS] [voxel-file]\n"
             "\n"
             "Arguments:\n"
-            "  -o           write image file\n"
-            "  -n           draw face numbers\n"
-            "  -s  radius   generate sphere\n"
-            "  -v,-vv       verbosity level"
+            "  -o               write image file\n"
+            "  -n               draw face numbers\n"
+            "  -s  radius       generate sphere\n"
+            "  -r  size,[seed]  generate random voxels\n"
+            "  -v,-vv           verbosity level"
     );
 }
 
@@ -42,7 +43,7 @@ int main(int argc, char **argv) {
     Settings *settings = settings_create();
 
     // Parse arguments
-    while ( (opt = getopt(argc, argv, "hgns:i:o:v")) != -1) {
+    while ( (opt = getopt(argc, argv, "hgnr:s:i:o:v")) != -1) {
         switch (opt) {
             case 'h':
                 settings->help_option = 1;
@@ -58,6 +59,9 @@ int main(int argc, char **argv) {
                 break;
             case 's':
                 settings->generator = generator_create(GENERATOR_SPHERE,optarg);
+                break;
+            case 'r':
+                settings->generator = generator_create(GENERATOR_RANDOM,optarg);
                 break;
             case 'v':
                 // increment verbosity level for each 'v'

@@ -7,7 +7,8 @@ typedef enum GeneratorType GeneratorType;
 
 enum GeneratorType
 {
-    GENERATOR_SPHERE
+    GENERATOR_SPHERE,
+    GENERATOR_RANDOM
 };
 
 typedef struct Generator Generator;
