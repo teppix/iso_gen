@@ -3,6 +3,7 @@
 
 #define MAX_FILE_NAME 1024
 
+#include "color.h"
 #include "generator.h"
 
 typedef struct Settings Settings;
@@ -13,7 +14,9 @@ struct Settings{
     // the size of each face
     unsigned int face_size;
     // base color for each face
-    unsigned char face_color;
+    Color face_color;
+    // color of the outlines
+    Color outline_color;
 	// light level in each direction
 	unsigned char light[3];
     // should we draw numbers on the faces?

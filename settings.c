@@ -8,7 +8,9 @@ Settings *settings_create(){
     settings->help_option = 0;
     settings->gui_option = 0;
     // color of the faces
-    settings->face_color = 160;
+    settings->face_color = COLOR(160,160,160);
+    // color of the outlines
+    settings->outline_color = COLOR(0,0,0);
 	// light levels
 	settings->light[0] = 0;
 	settings->light[1] = 20;
