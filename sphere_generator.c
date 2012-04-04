@@ -28,9 +28,9 @@ VoxelGrid *sphere_generator_generate(SphereGenerator *sphere_generator)
         for(y=0;y<voxelgrid->dim_y;y++){
             for(z=0;z<voxelgrid->dim_z;z++){
                 // get the distance to the center
-                float dist_x = abs(0.5+(float)x-sphere_generator->radius);
-                float dist_y = abs(0.5+(float)y-sphere_generator->radius);
-                float dist_z = abs(0.5+(float)z-sphere_generator->radius);
+                float dist_x = fabs(0.5+(float)x-sphere_generator->radius);
+                float dist_y = fabs(0.5+(float)y-sphere_generator->radius);
+                float dist_z = fabs(0.5+(float)z-sphere_generator->radius);
                 float distance = sqrtf(dist_y*dist_y+dist_x*dist_x);
                 distance = sqrtf(dist_z*dist_z+distance*distance);
                 // if the distance is less than the radius
