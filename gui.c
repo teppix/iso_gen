@@ -24,7 +24,6 @@ static void iso_view_expose (GtkWidget *widget, GdkEventExpose *event, GuiContex
     char buffer[128];
     Renderer *renderer = context->renderer;
 
-    cairo_surface_t *source;
     cairo_t *cr;
 
     if (renderer->pixels == NULL) {
@@ -33,6 +32,7 @@ static void iso_view_expose (GtkWidget *widget, GdkEventExpose *event, GuiContex
     }
 
     // Create cairo surface from pixel data
+    /*
     source = cairo_image_surface_create_for_data (
             (char*)renderer->pixels,
             CAIRO_FORMAT_RGB24,
@@ -40,6 +40,7 @@ static void iso_view_expose (GtkWidget *widget, GdkEventExpose *event, GuiContex
             renderer->image_height,
             renderer->image_width * 4
     );
+    */
 
     cr = gdk_cairo_create (widget->window);
     
@@ -47,11 +48,10 @@ static void iso_view_expose (GtkWidget *widget, GdkEventExpose *event, GuiContex
     cairo_paint (cr);
 
     // copy image from source-surface
-    cairo_set_source_surface (cr, source, 0, 0);
+    cairo_set_source_surface (cr, renderer->surface, 0, 0);
     cairo_paint (cr);
 
     cairo_destroy (cr);
-    cairo_surface_destroy (source);
 }
 
 static void adjustment_changed_cb (GtkAdjustment *adj, GuiContext *context)
