@@ -31,17 +31,6 @@ static void iso_view_expose (GtkWidget *widget, GdkEventExpose *event, GuiContex
         return;
     }
 
-    // Create cairo surface from pixel data
-    /*
-    source = cairo_image_surface_create_for_data (
-            (char*)renderer->pixels,
-            CAIRO_FORMAT_RGB24,
-            renderer->image_width,
-            renderer->image_height,
-            renderer->image_width * 4
-    );
-    */
-
     cr = gdk_cairo_create (widget->window);
     
     cairo_set_source_rgb (cr, .5, .5, .5);
