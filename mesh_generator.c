@@ -5,6 +5,7 @@
 #include <float.h>
 
 #include "mesh_generator.h"
+#include "grid_accel.h"
 #include "voxelgrid.h"
 
 #define OUTSIDE 0
@@ -278,19 +279,24 @@ void free_mesh(Mesh *mesh)
     }
 }
 
-float trace_ray(VoxelGrid *voxelgrid, Mesh *mesh, unsigned int pos[3])
+float trace_ray(VoxelGrid *voxelgrid, Mesh *mesh, AccelerationGrid *acceleration_grid, unsigned int pos[3])
 {
+    unsigned int i;
+    unsigned int num_faces;
+    unsigned int *faces;
     unsigned int current_face;
-    // TODO: use acceleration structure. Naive implementation for now
     // distance to intersection
     float distance = -1;
+    // get triangles to test
+    num_faces = acceleration_grid_lookup(acceleration_grid,pos[0],pos[1],&faces);
     // for each triangle
-    for(current_face =0;current_face <mesh->num_faces;current_face++)
+    for(i =0;i <num_faces;i++)
     {
         unsigned int vert,coord;
         float determinant;
         float bary_coords[3];
         float tri_coords[3][3];
+        current_face = faces[i];
         // get the coordinates of the triangle
         for(vert=0;vert<3;vert++){
             for(coord=0;coord<3;coord++){
@@ -341,7 +347,7 @@ MeshGenerator *mesh_generator_create(const char *args)
     // create generator
     MeshGenerator *mesh_generator = (MeshGenerator *)malloc(sizeof(MeshGenerator));
     // TODO: get size from user
-    mesh_generator->size = 20;
+    mesh_generator->size = 40;
     // read mesh file
     mesh_generator->mesh = read_obj_file(args,(float)mesh_generator->size);
     return mesh_generator;
@@ -353,6 +359,8 @@ VoxelGrid *mesh_generator_generate(MeshGenerator *mesh_generator)
     unsigned int pos[3];
     // create voxel grid
     VoxelGrid *voxelgrid = voxelgrid_create(NULL,mesh_generator->size,mesh_generator->size,mesh_generator->size);
+    // create acceleration structure
+    AccelerationGrid *acceleration_grid = acceleration_grid_create(mesh_generator->mesh, mesh_generator->size,mesh_generator->size,mesh_generator->size,mesh_generator->size);
     // current state (inside or outside model)
     unsigned int state = OUTSIDE;
     if(mesh_generator->mesh != NULL){
@@ -364,7 +372,7 @@ VoxelGrid *mesh_generator_generate(MeshGenerator *mesh_generator)
                 // reset state to outside
                 state = OUTSIDE;
                 // trace a ray
-                distance = trace_ray(voxelgrid, mesh_generator->mesh, pos);
+                distance = trace_ray(voxelgrid, mesh_generator->mesh, acceleration_grid, pos);
                 // as long as we've hit something
                 while(distance != -1)
                 {
@@ -381,11 +389,13 @@ VoxelGrid *mesh_generator_generate(MeshGenerator *mesh_generator)
                     // toggle state
                     state = 1-state;
                     // trace new ray
-                    distance = trace_ray(voxelgrid, mesh_generator->mesh, pos);
+                    distance = trace_ray(voxelgrid, mesh_generator->mesh, acceleration_grid, pos);
                 }
             }
         }
     }
+    // free acceleration structure
+    acceleration_grid_free(acceleration_grid);
     // return voxel grid
     return voxelgrid;
 }

@@ -7,6 +7,7 @@ set (ISOGEN_SRCS
     sphere_generator.c
     random_generator.c
     mesh_generator.c
+    grid_accel.c
     generator.c
     settings.c
     renderer.c
