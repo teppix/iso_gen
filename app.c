@@ -27,6 +27,7 @@ static void show_help(void)
             "  -n               draw face numbers\n"
             "  -s  radius       generate sphere\n"
             "  -r  size,[seed]  generate random voxels\n"
+            "  -m  filename     generate voxels from 3d mesh\n"
             "  -v,-vv           verbosity level"
     );
 }
@@ -43,7 +44,7 @@ int main(int argc, char **argv) {
     Settings *settings = settings_create();
 
     // Parse arguments
-    while ( (opt = getopt(argc, argv, "hgnr:s:i:o:v")) != -1) {
+    while ( (opt = getopt(argc, argv, "hgnm:r:s:i:o:v")) != -1) {
         switch (opt) {
             case 'h':
                 settings->help_option = 1;
@@ -62,6 +63,9 @@ int main(int argc, char **argv) {
                 break;
             case 'r':
                 settings->generator = generator_create(GENERATOR_RANDOM,optarg);
+                break;
+            case 'm':
+                settings->generator = generator_create(GENERATOR_MESH,optarg);
                 break;
             case 'v':
                 // increment verbosity level for each 'v'

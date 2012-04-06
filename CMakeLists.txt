@@ -6,6 +6,7 @@ set (ISOGEN_SRCS
     voxelgrid.c
     sphere_generator.c
     random_generator.c
+    mesh_generator.c
     generator.c
     settings.c
     renderer.c
