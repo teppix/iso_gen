@@ -279,18 +279,55 @@ void free_mesh(Mesh *mesh)
     }
 }
 
-float trace_ray(VoxelGrid *voxelgrid, Mesh *mesh, AccelerationGrid *acceleration_grid, unsigned int pos[3])
+static void bubble_sort(unsigned int *elements, unsigned int num_elements)
+{
+    // simple bubble sort implementation
+    unsigned int i;
+    unsigned int tmp;
+    char swapped;
+    do
+    {
+        swapped = 0;
+        for(i=1;i<num_elements;i++){
+            if(elements[i-1] > elements[i]){
+                tmp = elements[i];
+                elements[i] = elements[i-1];
+                elements[i-1] = tmp;
+                swapped = 1;
+            }
+        }
+    }while (swapped);
+}
+
+void free_intersections(unsigned int *intersections)
+{
+    if(intersections != NULL)
+    {
+        free(intersections);
+    }
+}
+
+float get_intersections(VoxelGrid *voxelgrid, Mesh *mesh, AccelerationGrid *acceleration_grid, unsigned int pos[3], unsigned int **intersections)
 {
     unsigned int i;
     unsigned int num_faces;
     unsigned int *faces;
     unsigned int current_face;
-    // distance to intersection
-    float distance = -1;
+    unsigned int num_intersections;
     // get triangles to test
     num_faces = acceleration_grid_lookup(acceleration_grid,pos[0],pos[1],&faces);
+    // allocate space for intersection data
+    if(*intersections != NULL)
+    {
+        free(*intersections);
+    }
+    // NOTE: we might allocate more memory than we'll be using (all faces might not be intersected)
+    // probably shouldn't be a problem
+    *intersections = (unsigned int *)malloc(num_faces*sizeof(int));
+    // set number of intersections to zero
+    num_intersections = 0;
     // for each triangle
-    for(i =0;i <num_faces;i++)
+    for(i =0;i<num_faces;i++)
     {
         unsigned int vert,coord;
         float determinant;
@@ -315,32 +352,23 @@ float trace_ray(VoxelGrid *voxelgrid, Mesh *mesh, AccelerationGrid *acceleration
                                 (tri_coords[0][0] - tri_coords[2][0])*(pos[1] - tri_coords[2][1]);
         bary_coords[1] /= determinant;
         bary_coords[2] = 1 - bary_coords[0] - bary_coords[1];
-        //printf("bary: %f %f %f\n",bary_coords[0],bary_coords[1],bary_coords[2]);
-        //printf("tri: %f %f %f\n",tri_coords[0][1],tri_coords[1][1],tri_coords[2][1]);
         // if there's an intersection (point is inside triangle)
         if(bary_coords[0] > 0 && bary_coords[0] < 1){
             if(bary_coords[1] > 0 && bary_coords[1] < 1){
-                //printf("hit!\n");
                 if(bary_coords[2] > 0 && bary_coords[2] < 1){
-                    // get z value
-                    float z = bary_coords[0]*tri_coords[0][2]+bary_coords[1]*tri_coords[1][2]+bary_coords[2]*tri_coords[2][2];
-                    // if the z value is in front of the ray
-                    if(z > pos[2])
-                    {
-                        float new_dist = z-pos[2];
-                        // if the distance is less than the last one
-                        if(new_dist < distance || distance == -1)
-                        {
-                            // update distance
-                            distance = new_dist;
-                        }
-                    }
+                    // get depth
+                    (*intersections)[num_intersections] = bary_coords[0]*tri_coords[0][2]+bary_coords[1]*tri_coords[1][2]+bary_coords[2]*tri_coords[2][2];
+                    num_intersections++;
                 }
             }
         }
     }
-    return distance;
+    // sort intersections
+    bubble_sort(*intersections,num_intersections);
+    
+    return num_intersections;
 }
+
 
 MeshGenerator *mesh_generator_create(const char *args)
 {
@@ -357,6 +385,9 @@ VoxelGrid *mesh_generator_generate(MeshGenerator *mesh_generator)
 {
     float distance;
     unsigned int pos[3];
+    unsigned int num_intersections;
+    unsigned int intersection;
+    unsigned int *intersections = NULL;
     // create voxel grid
     VoxelGrid *voxelgrid = voxelgrid_create(NULL,mesh_generator->size,mesh_generator->size,mesh_generator->size);
     // create acceleration structure
@@ -371,15 +402,13 @@ VoxelGrid *mesh_generator_generate(MeshGenerator *mesh_generator)
                 pos[2] = 0;
                 // reset state to outside
                 state = OUTSIDE;
-                // trace a ray
-                distance = trace_ray(voxelgrid, mesh_generator->mesh, acceleration_grid, pos);
-                // as long as we've hit something
-                while(distance != -1)
-                {
+                // get intersections
+                num_intersections = get_intersections(voxelgrid, mesh_generator->mesh, acceleration_grid, pos,&intersections);
+                // for each intersection
+                for(intersection=0;intersection<num_intersections;intersection++){
                     unsigned int i;
                     // for each voxel along the way
-                    for(i=0;i<distance;i++)
-                    {
+                    while(pos[2]<intersections[intersection]){
                         // update density
                         // TODO: we shouldn't have to flip z
                         VOXEL(voxelgrid,pos[0],pos[1],mesh_generator->size -pos[2]-1) = state;
@@ -388,12 +417,12 @@ VoxelGrid *mesh_generator_generate(MeshGenerator *mesh_generator)
                     }
                     // toggle state
                     state = 1-state;
-                    // trace new ray
-                    distance = trace_ray(voxelgrid, mesh_generator->mesh, acceleration_grid, pos);
                 }
             }
         }
     }
+    // free intersection data
+    free_intersections(intersections);
     // free acceleration structure
     acceleration_grid_free(acceleration_grid);
     // return voxel grid
